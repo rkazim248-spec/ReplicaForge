@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Synthetic Store</title>
+	<meta name="description" content="Deterministic ReplicaForge Phase 2 fixture">
+	<style>
+		body { font-family: Inter, Arial; color: #222; background: #fff; max-width: 1200px; margin: 0 auto; }
+		.hero { display: flex; gap: 24px; align-items: center; background: #f4f4f4; padding: 64px 24px; }
+		.hero h1 { font-size: 56px; line-height: 1.1; }
+		.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+		.card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, .1); }
+		.btn { background: #635bff; color: #fff; border-radius: 4px; padding: 12px 20px; }
+		@media (max-width: 768px) {
+			.hero { display: block; }
+			.grid { grid-template-columns: 1fr; }
+			.btn { padding: 8px 12px; }
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<a class="logo" href="/">Logo</a>
+		<nav class="menu-toggle" aria-expanded="false" aria-controls="mobile-menu">Menu</nav>
+		<nav class="main-menu">
+			<a href="/">Home</a>
+			<a href="/about">About</a>
+			<a class="btn" href="/start">Get Started</a>
+		</nav>
+	</header>
+	<main>
+		<section class="hero">
+			<div>
+				<h1>Build Better Websites</h1>
+				<p>Supporting text for the hero section.</p>
+				<a class="btn" href="/start">Get Started</a>
+			</div>
+			<img src="/hero.jpg" alt="Hero image">
+		</section>
+		<section class="features">
+			<h2>Features</h2>
+			<div class="grid">
+				<div class="card feature-card"><h3>Fast</h3><p>Fast and simple.</p></div>
+				<div class="card feature-card"><h3>Secure</h3><p>Safe by default.</p></div>
+				<div class="card feature-card"><h3>Flexible</h3><p>Ready to grow.</p></div>
+			</div>
+		</section>
+		<section class="product-grid">
+			<h2>Products</h2>
+			<div class="product-card">
+				<img src="/p1.jpg" alt="Product one">
+				<h3>Product One</h3><span>$19.00</span><button class="btn">Add to Cart</button>
+			</div>
+			<div class="product-card">
+				<img src="/p2.jpg" alt="Product two">
+				<h3>Product Two</h3><span>$29.00</span><button class="btn">Add to Cart</button>
+			</div>
+		</section>
+	</main>
+	<footer><p>Footer</p></footer>
+</body>
+</html>

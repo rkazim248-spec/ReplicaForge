@@ -1,0 +1,1740 @@
+/*
+ * ReplicaForge admin styles.
+ * Kept intentionally small and dependency-free so the screen follows the
+ * native WordPress admin visual language.
+ */
+
+.replicaforge-admin {
+	--rf-ink: #1d2327;
+	--rf-muted: #646970;
+	--rf-border: #dcdcde;
+	--rf-subtle: #f6f7f7;
+	--rf-accent: #2271b1;
+	--rf-accent-dark: #135e96;
+	--rf-success: #007017;
+	--rf-danger: #b32d2e;
+	max-width: 1180px;
+	color: var(--rf-ink);
+}
+
+.replicaforge-admin__header {
+	margin: 12px 0 24px;
+}
+
+.replicaforge-admin__eyebrow {
+	margin: 0 0 6px;
+	color: var(--rf-accent);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.replicaforge-admin h1,
+.replicaforge-admin h2,
+.replicaforge-admin h3 {
+	color: var(--rf-ink);
+}
+
+.replicaforge-admin__header h1 {
+	margin: 0;
+	font-size: 32px;
+	line-height: 1.2;
+}
+
+.replicaforge-admin__intro {
+	max-width: 720px;
+	margin: 10px 0 0;
+	color: var(--rf-muted);
+	font-size: 15px;
+	line-height: 1.6;
+}
+
+.replicaforge-admin__grid,
+.replicaforge-results__columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+	gap: 20px;
+	align-items: start;
+}
+
+.replicaforge-card {
+	background: #fff;
+	border: 1px solid var(--rf-border);
+	border-radius: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	padding: 24px;
+}
+
+.replicaforge-card h2,
+.replicaforge-card h3 {
+	margin: 0 0 10px;
+	font-size: 20px;
+	line-height: 1.3;
+}
+
+.replicaforge-card h3 {
+	font-size: 17px;
+}
+
+.replicaforge-card__description,
+.replicaforge-card__note,
+.replicaforge-form__help {
+	color: var(--rf-muted);
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.replicaforge-card__description {
+	max-width: 640px;
+	margin: 0 0 22px;
+}
+
+.replicaforge-card__note {
+	margin: 20px 0 0;
+}
+
+.replicaforge-form {
+	max-width: 640px;
+}
+
+.replicaforge-form__label {
+	display: block;
+	margin-bottom: 7px;
+	font-weight: 600;
+}
+
+.replicaforge-form__input {
+	width: 100%;
+	max-width: 620px;
+	min-height: 40px;
+	box-sizing: border-box;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	color: var(--rf-ink);
+	font-size: 15px;
+	line-height: 1.4;
+	padding: 8px 12px;
+}
+
+.replicaforge-form__input:focus {
+	border-color: var(--rf-accent);
+	box-shadow: 0 0 0 1px var(--rf-accent);
+	outline: 2px solid transparent;
+}
+
+.replicaforge-form__help {
+	margin: 8px 0 20px;
+}
+
+.replicaforge-form__button {
+	min-height: 36px;
+}
+
+.replicaforge-form__button:focus,
+.replicaforge-details__item summary:focus,
+.replicaforge-raw summary:focus,
+.replicaforge-raw pre:focus {
+	outline: 2px solid var(--rf-accent);
+	outline-offset: 2px;
+}
+
+.replicaforge-status {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 42px;
+	margin-top: 18px;
+	padding: 12px 14px;
+	border-left: 4px solid var(--rf-border);
+	background: var(--rf-subtle);
+}
+
+.replicaforge-status.is-loading {
+	border-left-color: var(--rf-accent);
+}
+
+.replicaforge-status.is-complete {
+	border-left-color: var(--rf-success);
+}
+
+.replicaforge-status.is-error {
+	border-left-color: var(--rf-danger);
+}
+
+.replicaforge-status__text {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.replicaforge-status__hint {
+	margin: 8px 0 0;
+	color: var(--rf-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.replicaforge-status__error {
+	margin: 16px 0 0;
+	padding: 12px 14px;
+	border-left: 4px solid var(--rf-danger);
+	background: #fcf0f1;
+	color: var(--rf-danger);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.replicaforge-spinner {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	border: 2px solid #c3c4c7;
+	border-top-color: var(--rf-accent);
+	border-radius: 50%;
+	animation: replicaforge-spin 0.8s linear infinite;
+	flex: 0 0 auto;
+}
+
+.replicaforge-results {
+	margin-top: 24px;
+}
+
+.replicaforge-results__heading {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 16px;
+	margin: 0 0 14px;
+}
+
+.replicaforge-results__heading h2 {
+	margin: 0;
+	font-size: 24px;
+}
+
+.replicaforge-results__duration {
+	color: var(--rf-muted);
+	font-size: 12px;
+}
+
+.replicaforge-summary,
+.replicaforge-stat-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.replicaforge-summary {
+	margin-bottom: 20px;
+}
+
+.replicaforge-stat {
+	min-width: 0;
+	padding: 14px;
+	border: 1px solid var(--rf-border);
+	background: var(--rf-subtle);
+}
+
+.replicaforge-stat__label,
+.replicaforge-stat__value {
+	display: block;
+}
+
+.replicaforge-stat__label {
+	margin-bottom: 5px;
+	color: var(--rf-muted);
+	font-size: 12px;
+}
+
+.replicaforge-stat__value {
+	overflow: hidden;
+	color: var(--rf-ink);
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.4;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.replicaforge-results__columns {
+	margin-bottom: 20px;
+}
+
+.replicaforge-design-understanding {
+	margin-bottom: 20px;
+}
+
+.replicaforge-design-understanding__heading {
+	margin-bottom: 16px;
+}
+
+.replicaforge-design-understanding__heading h3 {
+	margin: 0;
+}
+
+.replicaforge-structure {
+	margin-top: 18px;
+}
+
+.replicaforge-structure__list {
+	margin-bottom: 0;
+}
+
+.replicaforge-sections {
+	margin-bottom: 20px;
+}
+
+.replicaforge-section-list {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	margin: 0;
+	padding-left: 22px;
+}
+
+.replicaforge-section-item {
+	min-width: 0;
+	padding: 10px 12px;
+	border: 1px solid var(--rf-border);
+	background: #fff;
+}
+
+.replicaforge-section-item strong {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.replicaforge-section-item__meta {
+	display: block;
+	margin-top: 5px;
+	color: var(--rf-muted);
+	font-size: 12px;
+}
+
+.replicaforge-tag {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 2px 6px;
+	border-radius: 3px;
+	background: #eef5fb;
+	color: var(--rf-accent-dark);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	vertical-align: middle;
+}
+
+.replicaforge-details {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.replicaforge-details__item,
+.replicaforge-raw {
+	background: #fff;
+	border: 1px solid var(--rf-border);
+	border-radius: 4px;
+	padding: 0 16px;
+}
+
+.replicaforge-details__item summary,
+.replicaforge-raw summary {
+	cursor: pointer;
+	padding: 14px 0;
+	font-weight: 600;
+	list-style-position: inside;
+}
+
+.replicaforge-details__body {
+	padding: 0 0 16px;
+}
+
+.replicaforge-data-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.replicaforge-data-list > li {
+	padding: 8px 0;
+	border-top: 1px solid #f0f0f1;
+	font-size: 13px;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.replicaforge-data-list > li:first-child {
+	border-top: 0;
+}
+
+.replicaforge-data-list--headings,
+.replicaforge-data-list--paragraphs,
+.replicaforge-data-list--images,
+.replicaforge-data-list--links {
+	max-height: 340px;
+	overflow: auto;
+}
+
+.replicaforge-heading-item {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+}
+
+.replicaforge-heading-item .replicaforge-tag {
+	flex: 0 0 auto;
+	margin-left: 0;
+}
+
+.replicaforge-image-item strong,
+.replicaforge-link-item span {
+	display: block;
+}
+
+.replicaforge-url-text {
+	display: block;
+	margin-top: 3px;
+	color: var(--rf-muted);
+	font-size: 11px;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.replicaforge-data-group + .replicaforge-data-group {
+	margin-top: 16px;
+}
+
+.replicaforge-data-group .replicaforge-data-list {
+	max-height: 220px;
+	overflow: auto;
+}
+
+.replicaforge-data-group__title {
+	margin: 0 0 6px;
+	color: var(--rf-muted);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.replicaforge-chip-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 12px;
+}
+
+.replicaforge-chip-list > li {
+	padding: 3px 7px;
+	border: 1px solid #d5e5f1;
+	background: #f4f8fb;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 11px;
+}
+
+.replicaforge-empty {
+	margin: 0;
+	padding: 10px 0;
+	color: var(--rf-muted);
+	font-style: italic;
+}
+
+.replicaforge-raw {
+	margin-bottom: 20px;
+}
+
+.replicaforge-raw pre {
+	max-height: 520px;
+	overflow: auto;
+	margin: 0 0 16px;
+	padding: 14px;
+	background: #f6f7f7;
+	color: #1d2327;
+	font-size: 12px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.replicaforge-admin .button-hero {
+	padding-left: 18px;
+	padding-right: 18px;
+	font-size: 14px;
+}
+
+@media screen and (max-width: 960px) {
+	.replicaforge-admin__grid,
+	.replicaforge-results__columns {
+		grid-template-columns: 1fr;
+	}
+
+	.replicaforge-summary,
+	.replicaforge-stat-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.replicaforge-details,
+	.replicaforge-section-list {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.replicaforge-admin__header h1 {
+		font-size: 28px;
+	}
+
+	.replicaforge-card {
+		padding: 18px;
+	}
+
+	.replicaforge-summary,
+	.replicaforge-stat-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.replicaforge-results__heading {
+		align-items: start;
+		flex-direction: column;
+		gap: 4px;
+	}
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.replicaforge-spinner {
+		animation: none;
+	}
+}
+
+@keyframes replicaforge-spin {
+	to {
+		transform: rotate( 360deg );
+	}
+}
+
+/*
+ * Phase 3 AI plan presentation. All labels are static and all remote values
+ * arrive as text nodes from admin.js.
+ */
+.replicaforge-ai {
+	margin-bottom: 20px;
+}
+
+.replicaforge-ai__heading,
+.replicaforge-ai__plan-heading {
+	margin-bottom: 12px;
+}
+
+.replicaforge-ai__provider {
+	margin: 0 0 14px;
+	color: var(--rf-muted);
+	font-size: 13px;
+}
+
+.replicaforge-ai__strategy {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px 16px;
+	margin: 18px 0;
+}
+
+.replicaforge-ai__row {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 0;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 13px;
+}
+
+.replicaforge-ai__label {
+	color: var(--rf-muted);
+}
+
+.replicaforge-ai__value {
+	font-weight: 600;
+	text-align: right;
+	overflow-wrap: anywhere;
+}
+
+.replicaforge-ai__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+	margin-bottom: 18px;
+}
+
+.replicaforge-ai__panel {
+	min-width: 0;
+	padding: 14px;
+	border: 1px solid var(--rf-border);
+	background: #fbfbfc;
+}
+
+.replicaforge-ai__panel h5 {
+	margin: 0 0 8px;
+	font-size: 14px;
+}
+
+.replicaforge-ai__list {
+	max-height: 340px;
+	margin: 0;
+	overflow: auto;
+	padding-left: 20px;
+}
+
+.replicaforge-ai__item {
+	margin: 0 0 8px;
+	padding-left: 2px;
+}
+
+.replicaforge-ai__item strong {
+	display: block;
+	font-size: 13px;
+}
+
+.replicaforge-ai__meta {
+	display: block;
+	margin-top: 2px;
+	color: var(--rf-muted);
+	font-size: 11px;
+	overflow-wrap: anywhere;
+}
+
+.replicaforge-form--secondary {
+	margin-top: 20px;
+	padding-top: 18px;
+	border-top: 1px solid var(--rf-border);
+}
+
+/*
+ * Phase 4 Elementor generation. All labels are static and every remote value is
+ * inserted as a text node by admin.js.
+ */
+.replicaforge-phase4 {
+	margin-bottom: 20px;
+}
+
+.replicaforge-phase4__heading {
+	margin-bottom: 12px;
+}
+
+.replicaforge-phase4__status {
+	margin: 0 0 8px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.replicaforge-phase4__options {
+	margin: 16px 0 18px;
+	padding: 14px;
+	border: 1px solid var(--rf-border);
+	background: var(--rf-subtle);
+}
+
+.replicaforge-phase4__options .replicaforge-card__note {
+	margin: 8px 0 0;
+}
+
+.replicaforge-phase4__result {
+	margin-top: 22px;
+	padding-top: 18px;
+	border-top: 1px solid var(--rf-border);
+}
+
+.replicaforge-phase4__result h4 {
+	margin: 0 0 6px;
+	font-size: 16px;
+}
+
+.replicaforge-phase4__draft {
+	margin: 0 0 16px;
+	color: var(--rf-muted);
+	font-size: 13px;
+}
+
+.replicaforge-phase4__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0 12px;
+}
+
+.replicaforge-phase4__panels {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+	margin: 18px 0;
+}
+
+@media screen and (max-width: 960px) {
+	.replicaforge-ai__strategy,
+	.replicaforge-ai__grid,
+	.replicaforge-phase4__panels {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ---------------------------------------------------------------- */
+/* Phase 5 - Visual Validation                                        */
+/* ---------------------------------------------------------------- */
+
+.replicaforge-phase5__notice {
+	margin: 12px 0;
+	padding: 10px 12px;
+	border-left: 4px solid #dba617;
+	background: #fcf9e8;
+	font-size: 13px;
+}
+
+.replicaforge-phase5__options {
+	display: grid;
+	gap: 6px;
+	margin: 14px 0;
+}
+
+.replicaforge-phase5__options label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+}
+
+.replicaforge-phase5__result {
+	margin-top: 20px;
+	padding-top: 18px;
+	border-top: 1px solid #dcdcde;
+}
+
+.replicaforge-phase5__tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 16px 0 12px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.replicaforge-phase5__tab {
+	margin: 0;
+	padding: 6px 10px;
+	border: 1px solid transparent;
+	border-bottom: 0;
+	border-radius: 3px 3px 0 0;
+	background: transparent;
+	color: #50575e;
+	cursor: pointer;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.replicaforge-phase5__tab:hover,
+.replicaforge-phase5__tab:focus {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.replicaforge-phase5__tab.is-active {
+	border-color: #dcdcde;
+	background: #fff;
+	color: #1d2327;
+	font-weight: 600;
+}
+
+.replicaforge-phase5__panel {
+	padding: 4px 0 12px;
+}
+
+.replicaforge-phase5__panel h5 {
+	margin: 18px 0 8px;
+	font-size: 13px;
+}
+
+.replicaforge-phase5__panel h5:first-child {
+	margin-top: 0;
+}
+
+.replicaforge-val__metrics {
+	display: grid;
+	grid-template-columns: minmax(120px, 200px) 1fr;
+	gap: 4px 12px;
+	margin: 0 0 12px;
+	font-size: 13px;
+}
+
+.replicaforge-val__metrics dt {
+	color: #50575e;
+	font-weight: 600;
+}
+
+.replicaforge-val__metrics dd {
+	margin: 0;
+	color: #1d2327;
+	font-variant-numeric: tabular-nums;
+}
+
+.replicaforge-val__list,
+.replicaforge-val__plan {
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+	font-size: 13px;
+}
+
+.replicaforge-val__list li,
+.replicaforge-val__plan li {
+	padding: 3px 0;
+	border-bottom: 1px solid #f0f0f1;
+	font-variant-numeric: tabular-nums;
+}
+
+.replicaforge-val__differences {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+}
+
+.replicaforge-val__difference {
+	display: grid;
+	grid-template-columns: 96px 96px 1fr;
+	gap: 4px 10px;
+	align-items: baseline;
+	padding: 8px 10px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.replicaforge-val__difference:last-child {
+	border-bottom: 0;
+}
+
+.replicaforge-val__category {
+	color: #50575e;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.replicaforge-val__message {
+	color: #1d2327;
+}
+
+.replicaforge-val__values {
+	grid-column: 1 / -1;
+	color: #50575e;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.replicaforge-badge {
+	display: inline-block;
+	padding: 1px 6px;
+	border-radius: 9px;
+	background: #f0f0f1;
+	color: #3c434a;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	white-space: nowrap;
+}
+
+.replicaforge-badge--critical {
+	background: #8a1f11;
+	color: #fff;
+}
+
+.replicaforge-badge--major {
+	background: #d63638;
+	color: #fff;
+}
+
+.replicaforge-badge--moderate {
+	background: #f0b849;
+	color: #1d2327;
+}
+
+.replicaforge-badge--minor {
+	background: #dcdcde;
+	color: #3c434a;
+}
+
+.replicaforge-badge--informational,
+.replicaforge-badge--ok {
+	background: #e0eef8;
+	color: #1d4a6b;
+}
+
+.replicaforge-badge--muted {
+	background: #f0f0f1;
+	color: #787c82;
+}
+
+.replicaforge-val__similarity {
+	margin: 0 0 6px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.replicaforge-val__levels {
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+	font-size: 13px;
+}
+
+.replicaforge-val__level {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+}
+
+.replicaforge-val__table code {
+	font-size: 11px;
+}
+
+@media screen and (max-width: 782px) {
+	.replicaforge-val__difference {
+		grid-template-columns: 1fr;
+	}
+
+	.replicaforge-val__metrics {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ---------------------------------------------------------------- */
+/* Phase 6 - Corrections                                              */
+/* ---------------------------------------------------------------- */
+
+.replicaforge-phase6__notice {
+	margin: 12px 0;
+	padding: 10px 12px;
+	border-left: 4px solid #dba617;
+	background: #fcf9e8;
+	font-size: 13px;
+}
+
+.replicaforge-phase6__options {
+	display: grid;
+	gap: 6px;
+	margin: 14px 0;
+}
+
+.replicaforge-phase6__options label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+}
+
+.replicaforge-phase6__review,
+.replicaforge-phase6__result {
+	margin-top: 20px;
+	padding-top: 18px;
+	border-top: 1px solid #dcdcde;
+}
+
+.replicaforge-phase6__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 14px 0 8px;
+}
+
+.replicaforge-phase6__structural {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 10px 0 4px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.replicaforge-phase6__groups {
+	margin: 16px 0;
+}
+
+.replicaforge-phase6__group-title {
+	margin: 18px 0 8px;
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #50575e;
+}
+
+.replicaforge-val__corrections {
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+}
+
+.replicaforge-val__correction {
+	padding: 10px 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.replicaforge-val__correction:last-child {
+	border-bottom: 0;
+}
+
+.replicaforge-val__correction--blocked {
+	background: #fafafa;
+}
+
+.replicaforge-val__correction-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 6px;
+}
+
+.replicaforge-val__correction-title {
+	font-family: Consolas, Monaco, monospace;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.replicaforge-val__check {
+	margin: 0;
+}
+
+.replicaforge-val__facts {
+	display: grid;
+	grid-template-columns: minmax(110px, 160px) 1fr;
+	gap: 2px 12px;
+	margin: 0;
+	font-size: 12px;
+}
+
+.replicaforge-val__facts dt {
+	color: #50575e;
+}
+
+.replicaforge-val__facts dd {
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+	word-break: break-word;
+}
+
+.replicaforge-val__conflict {
+	margin: 8px 0 0;
+	padding: 6px 8px;
+	border-left: 3px solid #dba617;
+	background: #fcf9e8;
+	font-size: 12px;
+}
+
+.replicaforge-val__reason {
+	margin: 6px 0 0;
+	color: #50575e;
+	font-size: 12px;
+}
+
+.replicaforge-phase6__panels {
+	margin: 18px 0;
+}
+
+.replicaforge-phase6__panels h5 {
+	margin: 18px 0 8px;
+	font-size: 13px;
+}
+
+@media screen and (max-width: 782px) {
+	.replicaforge-val__facts {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
+   Phase 7 admin: dashboard, history, system status, and logs.
+
+   Every colour is taken from a WordPress admin custom property or a value
+   WordPress itself uses, so the screens follow the active admin colour scheme
+   instead of imposing one. A value that is not available falls back to a
+   literal that matches the default WordPress admin, which is what an
+   administrator sees on a site with no admin theme applied.
+   ========================================================================== */
+
+.replicaforge-admin {
+	--rf-surface: #fff;
+	--rf-surface-sunken: #f6f7f7;
+	--rf-border: #c3c4c7;
+	--rf-border-subtle: #dcdcde;
+	--rf-text: #1d2327;
+	--rf-text-muted: #50575e;
+	--rf-accent: #2271b1;
+	--rf-accent-hover: #135e96;
+	--rf-ok: #007017;
+	--rf-ok-bg: #edfaef;
+	--rf-warn: #8a5700;
+	--rf-warn-bg: #fcf9e8;
+	--rf-fail: #b32d2e;
+	--rf-fail-bg: #fcf0f1;
+	--rf-progress-track: #dcdcde;
+	--rf-radius: 4px;
+	--rf-gap: 16px;
+	color: var(--rf-text);
+}
+
+@media (prefers-color-scheme: dark) {
+	.replicaforge-admin {
+		--rf-surface: #1d2327;
+		--rf-surface-sunken: #2c3338;
+		--rf-border: #4f5a63;
+		--rf-border-subtle: #3c434a;
+		--rf-text: #f0f0f1;
+		--rf-text-muted: #c3c4c7;
+		--rf-accent: #72aee6;
+		--rf-accent-hover: #9dc9f5;
+		--rf-ok: #68de7c;
+		--rf-ok-bg: #10321a;
+		--rf-warn: #dba617;
+		--rf-warn-bg: #3a2f0c;
+		--rf-fail: #f86368;
+		--rf-fail-bg: #3a1a1c;
+		--rf-progress-track: #3c434a;
+	}
+}
+
+/* --- Header ------------------------------------------------------------- */
+
+.replicaforge-admin__header {
+	margin: 20px 0 18px;
+}
+
+.replicaforge-admin__eyebrow {
+	margin: 0 0 2px;
+	color: var(--rf-text-muted);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.replicaforge-admin__header h1 {
+	margin: 0 0 6px;
+	padding: 0;
+	font-size: 23px;
+	font-weight: 400;
+	line-height: 1.3;
+}
+
+.replicaforge-admin__intro {
+	max-width: 68ch;
+	margin: 0;
+	color: var(--rf-text-muted);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+/* --- Layout ------------------------------------------------------------- */
+
+.replicaforge-dashboard {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+	gap: var(--rf-gap);
+	align-items: start;
+}
+
+.replicaforge-dashboard__main,
+.replicaforge-dashboard__side {
+	display: flex;
+	flex-direction: column;
+	gap: var(--rf-gap);
+	min-width: 0;
+}
+
+.replicaforge-card {
+	margin: 0 0 var(--rf-gap);
+	padding: 16px 18px;
+	border: 1px solid var(--rf-border-subtle);
+	border-radius: var(--rf-radius);
+	background: var(--rf-surface);
+}
+
+.replicaforge-dashboard__main .replicaforge-card:last-child,
+.replicaforge-dashboard__side .replicaforge-card:last-child {
+	margin-bottom: 0;
+}
+
+.replicaforge-card h2 {
+	margin: 0 0 10px;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.replicaforge-card > p {
+	max-width: 72ch;
+	color: var(--rf-text-muted);
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.replicaforge-card--cta {
+	border-left: 3px solid var(--rf-accent);
+}
+
+.replicaforge-card--cta p {
+	max-width: 60ch;
+}
+
+.replicaforge-card__note {
+	margin: 10px 0 0;
+	padding: 8px 10px;
+	border-left: 3px solid var(--rf-warn);
+	background: var(--rf-warn-bg);
+	color: var(--rf-text);
+	font-size: 12px;
+}
+
+/* --- Statistics --------------------------------------------------------- */
+
+.replicaforge-stats {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.replicaforge-stats li {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 7px 0;
+	border-bottom: 1px solid var(--rf-border-subtle);
+}
+
+.replicaforge-stats li:last-child {
+	border-bottom: 0;
+}
+
+.replicaforge-stats__label {
+	color: var(--rf-text-muted);
+	font-size: 13px;
+}
+
+.replicaforge-stats__value {
+	font-size: 15px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- Status list -------------------------------------------------------- */
+
+.replicaforge-status {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.replicaforge-status__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--rf-border-subtle);
+}
+
+.replicaforge-status__item:last-child {
+	border-bottom: 0;
+}
+
+/*
+ * The state is carried by a mark and a word as well as a colour, so it does not
+ * depend on distinguishing hues. The mark is decorative and hidden from assistive
+ * technology; the state word beside it carries the meaning.
+ */
+.replicaforge-status__mark {
+	flex: 0 0 auto;
+	width: 18px;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.5;
+	text-align: center;
+}
+
+.replicaforge-status__text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+
+.replicaforge-status__text strong {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.replicaforge-status__detail,
+.replicaforge-status__action {
+	color: var(--rf-text-muted);
+	font-size: 12px;
+	line-height: 1.5;
+	word-break: break-word;
+}
+
+.replicaforge-status__action {
+	color: var(--rf-text);
+	font-style: italic;
+}
+
+.replicaforge-status__item.is-ok .replicaforge-status__mark {
+	color: var(--rf-ok);
+}
+
+.replicaforge-status__item.is-warn .replicaforge-status__mark {
+	color: var(--rf-warn);
+}
+
+.replicaforge-status__item.is-fail .replicaforge-status__mark {
+	color: var(--rf-fail);
+}
+
+.replicaforge-status__item.is-ok {
+	background: var(--rf-ok-bg);
+}
+
+.replicaforge-status__item.is-warn {
+	background: var(--rf-warn-bg);
+}
+
+.replicaforge-status__item.is-fail {
+	background: var(--rf-fail-bg);
+}
+
+.replicaforge-status__item.is-ok,
+.replicaforge-status__item.is-warn,
+.replicaforge-status__item.is-fail {
+	margin: 0 -8px;
+	padding: 8px;
+	border-radius: 2px;
+}
+
+/* --- Badges ------------------------------------------------------------- */
+
+.replicaforge-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 8px;
+	border: 1px solid var(--rf-border);
+	border-radius: 10px;
+	background: var(--rf-surface-sunken);
+	color: var(--rf-text);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.replicaforge-badge__dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.replicaforge-badge.is-completed {
+	border-color: var(--rf-ok);
+	background: var(--rf-ok-bg);
+	color: var(--rf-ok);
+}
+
+.replicaforge-badge.is-running {
+	border-color: var(--rf-accent);
+	background: transparent;
+	color: var(--rf-accent);
+}
+
+.replicaforge-badge.is-failed,
+.replicaforge-badge.is-error,
+.replicaforge-badge.is-critical {
+	border-color: var(--rf-fail);
+	background: var(--rf-fail-bg);
+	color: var(--rf-fail);
+}
+
+.replicaforge-badge.is-paused,
+.replicaforge-badge.is-warning {
+	border-color: var(--rf-warn);
+	background: var(--rf-warn-bg);
+	color: var(--rf-warn);
+}
+
+.replicaforge-badge.is-cancelled,
+.replicaforge-badge.is-queued,
+.replicaforge-badge.is-debug,
+.replicaforge-badge.is-info {
+	border-color: var(--rf-border);
+	background: var(--rf-surface-sunken);
+	color: var(--rf-text-muted);
+}
+
+/* --- Progress ----------------------------------------------------------- */
+
+.replicaforge-progress {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 120px;
+}
+
+.replicaforge-progress__bar {
+	position: relative;
+	flex: 1 1 auto;
+	height: 8px;
+	min-width: 60px;
+	border-radius: 4px;
+	background: var(--rf-progress-track);
+	overflow: hidden;
+}
+
+.replicaforge-progress__fill {
+	display: block;
+	height: 100%;
+	border-radius: 4px;
+	background: var(--rf-accent);
+}
+
+/* A finished bar is a different colour as well as a different length. */
+.replicaforge-progress__fill.is-complete {
+	background: var(--rf-ok);
+}
+
+.replicaforge-progress__label {
+	flex: 0 0 auto;
+	min-width: 34px;
+	color: var(--rf-text-muted);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+/* --- Tables ------------------------------------------------------------- */
+
+/*
+ * The wrapper is focusable so a keyboard user can scroll the table sideways on a
+ * narrow screen. The label tells a screen reader what the scrollable region is.
+ */
+.replicaforge-table-wrap {
+	margin: 0 0 var(--rf-gap);
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.replicaforge-table-wrap:focus {
+	outline: 2px solid var(--rf-accent);
+	outline-offset: 2px;
+}
+
+.replicaforge-table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.replicaforge-table th,
+.replicaforge-table td {
+	padding: 8px 10px;
+	text-align: left;
+	vertical-align: top;
+	font-size: 13px;
+}
+
+.replicaforge-table thead th {
+	border-bottom: 2px solid var(--rf-border);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.replicaforge-table code {
+	font-size: 12px;
+	word-break: break-all;
+}
+
+.replicaforge-table .replicaforge-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.replicaforge-empty {
+	margin: 0 0 var(--rf-gap);
+	padding: 20px;
+	border: 1px dashed var(--rf-border);
+	border-radius: var(--rf-radius);
+	color: var(--rf-text-muted);
+	text-align: center;
+}
+
+/* --- Forms -------------------------------------------------------------- */
+
+.replicaforge-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 var(--rf-gap);
+	padding: 12px 14px;
+	border: 1px solid var(--rf-border-subtle);
+	border-radius: var(--rf-radius);
+	background: var(--rf-surface-sunken);
+}
+
+.replicaforge-filters label {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.replicaforge-form {
+	margin: 0 0 var(--rf-gap);
+	padding: 14px 16px;
+	border: 1px solid var(--rf-border-subtle);
+	border-radius: var(--rf-radius);
+	background: var(--rf-surface-sunken);
+}
+
+.replicaforge-form:last-child {
+	margin-bottom: 0;
+}
+
+.replicaforge-form p {
+	color: var(--rf-text);
+	font-size: 13px;
+}
+
+.replicaforge-form .form-table th {
+	width: 260px;
+}
+
+.replicaforge-inline-form {
+	display: inline-block;
+	margin: 0 0 0 8px;
+	vertical-align: middle;
+}
+
+.replicaforge-log-summary {
+	margin: 0 0 12px;
+	color: var(--rf-text-muted);
+	font-size: 13px;
+}
+
+/* --- Action buttons ----------------------------------------------------- */
+
+.replicaforge-actions .button {
+	min-height: 28px;
+}
+
+.rf-action--delete {
+	color: var(--rf-fail) !important;
+	border-color: var(--rf-fail) !important;
+}
+
+.rf-action--cancel {
+	color: var(--rf-warn) !important;
+	border-color: var(--rf-warn) !important;
+}
+
+.rf-action--resume,
+.rf-action--retry {
+	color: var(--rf-ok) !important;
+	border-color: var(--rf-ok) !important;
+}
+
+/* --- Focus -------------------------------------------------------------- */
+
+/*
+ * A visible focus ring on every interactive element, including the ones WordPress
+ * styles with `outline: none`. Removing a focus indicator makes a screen unusable
+ * by keyboard, so it is restored explicitly rather than inherited.
+ */
+.replicaforge-admin a:focus,
+.replicaforge-admin button:focus,
+.replicaforge-admin input:focus,
+.replicaforge-admin select:focus,
+.replicaforge-admin textarea:focus,
+.replicaforge-admin [tabindex]:focus {
+	outline: 2px solid var(--rf-accent);
+	outline-offset: 1px;
+	box-shadow: none;
+}
+
+.replicaforge-admin a:focus:not(:focus-visible),
+.replicaforge-admin button:focus:not(:focus-visible) {
+	outline: 2px solid var(--rf-accent);
+}
+
+/* --- Motion ------------------------------------------------------------- */
+
+/*
+ * Nothing in the admin animates on its own, but a user who has asked for less
+ * motion should not get a transition or a smooth scroll either.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.replicaforge-admin *,
+	.replicaforge-admin *::before,
+	.replicaforge-admin *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* --- High contrast ------------------------------------------------------ */
+
+@media (prefers-contrast: more) {
+	.replicaforge-admin {
+		--rf-border: #000;
+		--rf-border-subtle: #000;
+		--rf-text-muted: #1d2327;
+	}
+
+	.replicaforge-card,
+	.replicaforge-filters,
+	.replicaforge-form,
+	.replicaforge-table th,
+	.replicaforge-table td {
+		border-width: 1px;
+	}
+}
+
+/* --- Small screens ------------------------------------------------------ */
+
+/*
+ * WordPress collapses its own layout at 782px. The table becomes a stack of cards
+ * at the same point, because a horizontally scrolled correction table on a phone
+ * is not usable and a card list is.
+ */
+@media screen and (max-width: 782px) {
+	.replicaforge-dashboard {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.replicaforge-card {
+		padding: 14px;
+	}
+
+	.replicaforge-admin__header h1 {
+		font-size: 20px;
+	}
+
+	.replicaforge-table-wrap {
+		/* The cards below are readable without it, so no sideways scroll. */
+		overflow-x: visible;
+	}
+
+	.replicaforge-table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	.replicaforge-table,
+	.replicaforge-table tbody,
+	.replicaforge-table tr,
+	.replicaforge-table td {
+		display: block;
+		width: 100%;
+	}
+
+	.replicaforge-table tr {
+		margin: 0 0 12px;
+		padding: 10px 12px;
+		border: 1px solid var(--rf-border-subtle);
+		border-radius: var(--rf-radius);
+		background: var(--rf-surface);
+	}
+
+	.replicaforge-table tr:last-child {
+		margin-bottom: 0;
+	}
+
+	.replicaforge-table td {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		justify-content: space-between;
+		padding: 5px 0;
+		border-bottom: 1px solid var(--rf-border-subtle);
+	}
+
+	.replicaforge-table td:last-child {
+		border-bottom: 0;
+	}
+
+	/*
+	 * The column heading is repeated inside each cell through `data-label`, so a
+	 * cell still says what it holds when the header row is out of view.
+	 */
+	.replicaforge-table td::before {
+		content: attr(data-label);
+		flex: 0 0 auto;
+		color: var(--rf-text-muted);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.replicaforge-table td > * {
+		margin-left: auto;
+		text-align: right;
+	}
+
+	.replicaforge-actions {
+		justify-content: flex-end;
+	}
+
+	.replicaforge-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.replicaforge-filters label {
+		margin-bottom: -4px;
+	}
+
+	.replicaforge-form .form-table th {
+		width: auto;
+		padding-bottom: 2px;
+	}
+
+	.replicaforge-form .form-table td {
+		padding-top: 0;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	.replicaforge-stats li {
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.replicaforge-inline-form {
+		display: block;
+		margin: 8px 0 0;
+	}
+}

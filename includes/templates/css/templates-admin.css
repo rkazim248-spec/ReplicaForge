@@ -1,0 +1,194 @@
+/*
+ * Phase 19: the template library admin styles.
+ *
+ * Follows the conventions the Phase 15/17 screens already established rather than
+ * inventing a new visual language: the `replicaforge-admin` wrapper, card panels, the
+ * `replicaforge-filters` form, `widefat.striped` tables, and the `rf-tag rf-tag-*` state
+ * pills. A new stylesheet for one feature that looked different from its neighbours is the
+ * fastest way to make a plugin look assembled rather than designed.
+ *
+ * Co-located with the classes, per the `includes/<feature>/css/` convention Phase 17
+ * introduced.
+ */
+
+.replicaforge-admin .replicaforge-columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+	gap: 20px;
+	align-items: start;
+	margin-top: 20px;
+}
+
+.replicaforge-admin .replicaforge-columns__main,
+.replicaforge-admin .replicaforge-columns__side {
+	min-width: 0;
+}
+
+@media (max-width: 960px) {
+	.replicaforge-admin .replicaforge-columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* A card is a panel, not a shadowed box. WordPress admin is dense; elevation is noise. */
+.replicaforge-admin .replicaforge-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 16px 20px;
+	margin: 0 0 20px;
+}
+
+.replicaforge-admin .replicaforge-card h2 {
+	margin-top: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.replicaforge-admin .replicaforge-card h3 {
+	font-size: 13px;
+	margin: 16px 0 4px;
+}
+
+.replicaforge-admin .replicaforge-empty {
+	text-align: center;
+	padding: 48px 24px;
+}
+
+.replicaforge-admin .replicaforge-empty p {
+	max-width: 60ch;
+	margin: 0 auto;
+	color: #50575e;
+}
+
+/* Counts, presented as a definition list so they read as facts rather than dashboard tiles. */
+.replicaforge-admin .replicaforge-statlist {
+	margin: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 10px 20px;
+}
+
+.replicaforge-admin .replicaforge-statlist li {
+	list-style: none;
+	margin: 0;
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.replicaforge-admin .replicaforge-statlist__label {
+	color: #50575e;
+}
+
+/*
+ * The reusability indicators.
+ *
+ * A grid of label/value rows rather than a single score, because the whole point is that
+ * these are separate measurements. A row that could not be measured says "Not available"
+ * in the muted tone so it is visibly distinct from a measured zero.
+ */
+.replicaforge-admin .replicaforge-indicators {
+	margin: 0;
+}
+
+.replicaforge-admin .replicaforge-indicators__row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 7px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.replicaforge-admin .replicaforge-indicators__row:last-child {
+	border-bottom: 0;
+}
+
+.replicaforge-admin .replicaforge-indicators__row dt {
+	color: #50575e;
+}
+
+.replicaforge-admin .replicaforge-indicators__row dd {
+	margin: 0;
+	text-align: right;
+	min-width: 120px;
+}
+
+.replicaforge-admin .replicaforge-indicators__value {
+	font-variant-numeric: tabular-nums;
+	color: #50575e;
+	margin-left: 6px;
+}
+
+.replicaforge-admin .replicaforge-findings {
+	margin: 0 0 8px;
+	padding-left: 18px;
+}
+
+.replicaforge-admin .replicaforge-findings code {
+	font-size: 11px;
+	color: #50575e;
+}
+
+/* Actions sit in a row above the panels, and inline forms must not add block spacing. */
+.replicaforge-admin .replicaforge-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 16px 0 0;
+}
+
+.replicaforge-admin .replicaforge-inline-form {
+	display: inline;
+	margin: 0;
+}
+
+.replicaforge-admin .replicaforge-pagination {
+	margin: 16px 0;
+}
+
+.replicaforge-admin .replicaforge-table code {
+	font-size: 11px;
+}
+
+/* On narrow screens the tables become cards, so a data label replaces the lost column. */
+@media (max-width: 782px) {
+	.replicaforge-admin .replicaforge-table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+
+	.replicaforge-admin .replicaforge-table tr {
+		display: block;
+		margin-bottom: 12px;
+		border: 1px solid #c3c4c7;
+		border-radius: 4px;
+		background: #fff;
+	}
+
+	.replicaforge-admin .replicaforge-table td {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		border-bottom: 1px solid #f0f0f1;
+	}
+
+	.replicaforge-admin .replicaforge-table td:last-child {
+		border-bottom: 0;
+	}
+
+	.replicaforge-admin .replicaforge-table td::before {
+		content: attr(data-label);
+		font-weight: 600;
+		color: #50575e;
+		flex: 0 0 auto;
+	}
+}

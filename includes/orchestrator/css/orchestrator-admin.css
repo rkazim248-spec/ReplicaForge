@@ -1,0 +1,209 @@
+<?php
+/**
+ * Phase 17: workflow admin styles.
+ *
+ * Kept deliberately small. The status colours are the only thing here that carries meaning,
+ * and they are chosen to stay distinguishable for the most common forms of colour blindness -
+ * red and green are never the only difference between two states, and every state also has a
+ * text label inside its badge.
+ *
+ * @package ReplicaForge
+ */
+
+.rf-workflows .rf-banner {
+	margin: 16px 0;
+	padding: 12px 16px;
+	border-left: 4px solid #787c82;
+	background: #fff;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.rf-workflows .rf-banner-ok { border-left-color: #00a32a; }
+.rf-workflows .rf-banner-warn { border-left-color: #dba617; }
+.rf-workflows .rf-banner-bad { border-left-color: #d63638; }
+
+.rf-workflows .rf-banner h2 {
+	margin-top: 0;
+	font-size: 14px;
+}
+
+.rf-capability-list {
+	margin: 8px 0 0;
+	list-style: disc;
+	padding-left: 20px;
+}
+
+.rf-capability-list li {
+	margin-bottom: 10px;
+}
+
+/* Status tags. The text inside every tag carries the meaning; the colour is a secondary cue. */
+.rf-tag {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 9px;
+	font-size: 11px;
+	line-height: 1.8;
+	font-weight: 500;
+	white-space: nowrap;
+	background: #f0f0f1;
+	color: #3c434a;
+}
+
+.rf-tag-ok    { background: #edfaef; color: #0a4b12; }
+.rf-tag-warn  { background: #fcf9e8; color: #614200; }
+.rf-tag-bad   { background: #fcebeb; color: #8a2424; }
+.rf-tag-muted { background: #f0f0f1; color: #50575e; }
+
+.rf-group {
+	margin-top: 28px;
+}
+
+.rf-count {
+	font-size: 13px;
+	font-weight: 400;
+	color: #646970;
+}
+
+.rf-table td,
+.rf-table th {
+	vertical-align: top;
+}
+
+.rf-empty {
+	max-width: 640px;
+	margin: 32px 0;
+	padding: 24px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+}
+
+.rf-empty h2 {
+	margin-top: 0;
+}
+
+.rf-workflow-detail .rf-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	margin: 16px 0;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+}
+
+.rf-workflow-detail .rf-summary > div {
+	min-width: 140px;
+}
+
+.rf-label {
+	display: block;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #646970;
+}
+
+.rf-value {
+	display: block;
+	margin-top: 2px;
+	font-weight: 600;
+	word-break: break-word;
+}
+
+.rf-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0;
+}
+
+.rf-panel {
+	margin: 24px 0;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+}
+
+.rf-panel h2 {
+	margin-top: 0;
+}
+
+.rf-panel-approvals {
+	border-left: 4px solid #dba617;
+}
+
+.rf-approval-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rf-approval-list li {
+	padding: 12px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.rf-approval-list li:last-child {
+	border-bottom: 0;
+}
+
+.rf-approval-buttons {
+	margin-top: 8px;
+}
+
+.rf-timeline {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: rf-stage;
+}
+
+.rf-stage {
+	position: relative;
+	padding: 8px 0 8px 28px;
+	border-bottom: 1px solid #f6f7f7;
+}
+
+.rf-stage:last-child {
+	border-bottom: 0;
+}
+
+.rf-stage::before {
+	position: absolute;
+	left: 4px;
+	top: 12px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #c3c4c7;
+	content: "";
+}
+
+.rf-stage-succeeded::before { background: #00a32a; }
+.rf-stage-failed::before    { background: #d63638; }
+.rf-stage-skipped::before   { background: #c3c4c7; }
+.rf-stage-blocked::before   { background: #dba617; }
+.rf-stage-pending::before   { background: #c3c4c7; }
+
+.rf-stage-name {
+	font-weight: 600;
+}
+
+.rf-stage .description {
+	display: block;
+	margin-top: 2px;
+	font-size: 12px;
+}
+
+/* Narrow screens: the summary stack rather than overflow. */
+@media screen and (max-width: 782px) {
+	.rf-workflow-detail .rf-summary {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.rf-actions {
+		flex-direction: column;
+	}
+}

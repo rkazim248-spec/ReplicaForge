@@ -1,0 +1,390 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: ReplicaForge 0.7.0\n"
+"Report-Msgid-Bugs-To: https://example.com/replicaforge\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: \n"
+"X-Generator: WP-CLI 2.x\n"
+"X-Domain: replicaforge\n"
+
+#: replicaforge.php
+msgid "ReplicaForge"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Dashboard"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "History"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Settings"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Validation"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Corrections"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "System Status"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Logs"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Create New Replica"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Create a new replica"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Analyze a public website frontend, understand its design, build an editable Elementor draft, measure the differences, and correct the measurable ones."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Recent jobs"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "View all history"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Open System Status"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "At a glance"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Queued jobs"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Running jobs"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Completed jobs"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Stored log entries"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Stored transients"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Project history"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Every analysis, generation, validation, and correction run ReplicaForge has carried out, newest first. Nothing here is deleted while a draft still depends on it."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Source"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Status"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Stage"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Progress"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Result"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Started"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Duration"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Actions"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "All types"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "All statuses"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Filter"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Type"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Resume"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Retry"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Delete"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "No jobs have been run yet."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "OK"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Warning"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Problem"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "System status"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Whether this install can run ReplicaForge, and what to do when it cannot."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Checks"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Versions"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Stored data"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Maintenance"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Run cleanup now"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Run migration"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Save retention settings"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Remove expired transients, finished jobs, old log entries, and abandoned idempotency records. Active jobs and restorable snapshots are never removed."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Keep log entries for (days)"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Keep finished jobs for (days)"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Keep snapshots for (days)"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Maximum log entries"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Structured ReplicaForge activity. Secrets and private network detail are removed before anything is written, and again on export."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "All levels"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Search"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Export log"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Clear log"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "No log entries match."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Time"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Level"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Event"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Message"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Request"
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "The cleanup ran."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "The migration ran."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "The log was cleared."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "You do not have permission to access ReplicaForge."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "You do not have permission to do this."
+msgstr ""
+
+#: includes/class-replicaforge-admin.php
+msgid "Your session could not be verified. Please reload the page and try again."
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Ready"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Ready with warnings"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Action required"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "WordPress is too old"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "PHP is too old"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Elementor not installed"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Elementor not active"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "AI not configured"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "WP-Cron disabled"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Background jobs"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Outbound requests"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Database"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Data schema"
+msgstr ""
+
+#: includes/class-replicaforge-system-status.php
+msgid "Schema update pending"
+msgstr ""
+
+#: includes/class-replicaforge-error-catalog.php
+msgid "This address cannot be analyzed. ReplicaForge only connects to public websites, not to private networks or local services."
+msgstr ""
+
+#: includes/class-replicaforge-error-catalog.php
+msgid "The website did not respond in time. It may be slow or temporarily unavailable. Try again in a moment."
+msgstr ""
+
+#: includes/class-replicaforge-error-catalog.php
+msgid "You do not have permission to do this. Only a site administrator can run ReplicaForge."
+msgstr ""
+
+#: includes/class-replicaforge-error-catalog.php
+msgid "Your session could not be verified. Reload the page and try again."
+msgstr ""
+
+#: includes/class-replicaforge-error-catalog.php
+msgid "Something went wrong inside ReplicaForge. Nothing was changed. The details are in the ReplicaForge log."
+msgstr ""
+
+#: includes/jobs/class-replicaforge-job-runner.php
+msgid "The AI stage did not complete, so the draft will be generated from the analyzed design alone."
+msgstr ""
+
+#: includes/jobs/class-replicaforge-job-runner.php
+msgid "The validation result was no longer available, so no corrections were planned. Validate the draft again to plan corrections."
+msgstr ""
+
+#: includes/class-replicaforge-plugin.php
+msgid "Every minute (ReplicaForge)"
+msgstr ""

@@ -1,0 +1,243 @@
+	/**
+	 * Validate a post identifier used to address a draft.
+	 *
+	 * A draft is addressed by a positive integer. Anything else, including a
+	 * non-numeric string that a database would coerce, is refused here rather
+	 * than being silently turned into post zero or a wildcard.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_post_id_param( $value ) {
+		if ( is_bool( $value ) || is_array( $value ) || is_object( $value ) ) {
+			return false;
+		}
+		if ( is_string( $value ) && ! preg_match( '/^[0-9]{1,20}$/', $value ) ) {
+			return false;
+		}
+		return is_numeric( $value ) && (int) $value > 0;
+	}
+
+	/**
+	 * Sanitize a post identifier.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return int
+	 */
+	public function sanitize_post_id_param( $value ) {
+		return $this->validate_post_id_param( $value ) ? (int) $value : 0;
+	}
+
+	/**
+	 * Validate a stored validation identifier.
+	 *
+	 * The shape is checked rather than the value, because a validation id names a
+	 * record in storage. Accepting any string here would let a caller probe the
+	 * cache with arbitrary keys.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_validation_id_param( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/^val_[a-f0-9]{24}$/', $value );
+	}
+
+	/**
+	 * Validate a stored correction plan identifier.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_plan_id_param( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/^plan_[a-f0-9]{20}$/', $value );
+	}
+
+	/**
+	 * Validate a stored correction run identifier.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_correction_id_param( $value ) {
+		return is_string( $value ) && 1 === preg_match( '/^cor_[a-f0-9]{20}$/', $value );
+	}
+
+	/**
+	 * Validate the list of correction identifiers a user approved.
+	 *
+	 * Every entry must look like a correction identifier. The list carries no
+	 * document data, so a malformed entry is a mistake rather than an attack, but
+	 * it is still refused: applying a correction the server did not plan is exactly
+	 * what the review step exists to prevent, and silently dropping an entry the
+	 * user ticked would make the review screen lie.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_selected_param( $value ) {
+		if ( ! is_array( $value ) ) {
+			return false;
+		}
+		if ( count( $value ) > Correction_Limits::MAX_APPLY ) {
+			return false;
+		}
+		foreach ( $value as $entry ) {
+			if ( ! $this->validate_correction_id_param( $entry ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Sanitize the approved list without discarding entries the user selected.
+	 *
+	 * Only the shape is enforced, and a list that fails the check is left as it
+	 * arrived so the route can refuse it with a clear message rather than quietly
+	 * applying a subset.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return array<int, string>
+	 */
+	public function sanitize_selected_param( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $value as $entry ) {
+			if ( is_string( $entry ) ) {
+				$out[] = trim( $entry );
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * Validate optional viewport overrides.
+	 *
+	 * The override shape is a map of viewport name to a width and a height. The
+	 * names must be the ones ReplicaForge knows, and the dimensions must be
+	 * plausible, because an override feeds a render request and an unbounded
+	 * dimension would be a way to make a renderer allocate an enormous image.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_viewports_param( $value ) {
+		if ( ! is_array( $value ) || empty( $value ) ) {
+			return false;
+		}
+		if ( count( $value ) > count( Validation_Limits::VIEWPORTS ) ) {
+			return false;
+		}
+		foreach ( $value as $name => $size ) {
+			if ( ! is_string( $name ) || ! isset( Validation_Limits::VIEWPORTS[ $name ] ) ) {
+				return false;
+			}
+			if ( ! is_array( $size ) ) {
+				return false;
+			}
+			foreach ( array( 'width', 'height' ) as $dimension ) {
+				if ( ! isset( $size[ $dimension ] ) ) {
+					return false;
+				}
+				$raw = $size[ $dimension ];
+				if ( is_bool( $raw ) || ! is_numeric( $raw ) ) {
+					return false;
+				}
+				$pixels = (int) $raw;
+				if ( $pixels < 240 || $pixels > 4096 ) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Sanitize viewport overrides, dropping anything not understood.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return array<string, array<string, int>>
+	 */
+	public function sanitize_viewports_param( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $value as $name => $size ) {
+			if ( ! is_string( $name ) || ! isset( Validation_Limits::VIEWPORTS[ $name ] ) || ! is_array( $size ) ) {
+				continue;
+			}
+			$entry = array();
+			foreach ( array( 'width', 'height' ) as $dimension ) {
+				if ( ! isset( $size[ $dimension ] ) || is_bool( $size[ $dimension ] ) || ! is_numeric( $size[ $dimension ] ) ) {
+					continue 2;
+				}
+				$entry[ $dimension ] = max( 240, min( 4096, (int) $size[ $dimension ] ) );
+			}
+			if ( isset( $entry['width'], $entry['height'] ) ) {
+				$out[ $name ] = $entry;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Validate a boolean argument.
+	 *
+	 * WordPress coerces several shapes to a boolean, but a bare string such as
+	 * "maybe" would become true, so an explicit set is accepted instead.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_boolean_param( $value ) {
+		if ( is_bool( $value ) ) {
+			return true;
+		}
+		if ( is_int( $value ) && ( 0 === $value || 1 === $value ) ) {
+			return true;
+		}
+		if ( is_string( $value ) ) {
+			return in_array( strtolower( trim( $value ) ), array( '0', '1', 'true', 'false', 'yes', 'no', 'on', 'off' ), true );
+		}
+		return false;
+	}
+
+	/**
+	 * Sanitize a boolean argument.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function sanitize_boolean_param( $value ) {
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+		if ( is_int( $value ) ) {
+			return 1 === $value;
+		}
+		if ( is_string( $value ) ) {
+			return in_array( strtolower( trim( $value ) ), array( '1', 'true', 'yes', 'on' ), true );
+		}
+		return false;
+	}
+
+	/**
+	 * Validate an optional design representation.
+	 *
+	 * Same size bound as the required argument, and it is a bound rather than a
+	 * shape check: the representation is re-validated by the phase that uses it,
+	 * so refusing it here for being "wrong" would duplicate that validation and
+	 * give two places to keep in step.
+	 *
+	 * @param mixed $value Raw parameter.
+	 * @return bool
+	 */
+	public function validate_optional_representation_param( $value ) {
+		return $this->validate_representation_param( $value );
+	}
+
+	/**
+	 * Sanitize the URL parameter without resolving or fetching it.

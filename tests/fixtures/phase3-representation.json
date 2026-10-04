@@ -1,0 +1,79 @@
+{
+  "schema_version": "2.0",
+  "page": {
+    "url": "https://example.com/",
+    "final_url": "https://example.com/",
+    "title": "Example",
+    "type": "Landing page",
+    "type_confidence": 0.8,
+    "type_source": "inferred",
+    "language": "en",
+    "description": "Example description",
+    "http_status": 200
+  },
+  "layout": {
+    "page": {
+      "type": "stack",
+      "display": "block",
+      "column_count": 0,
+      "columns": [],
+      "container": { "max_width": "1200px", "centered": true },
+      "confidence": 0.5,
+      "source_type": "inferred"
+    },
+    "regions": []
+  },
+  "sections": [
+    {
+      "id": "section_001",
+      "type": "hero",
+      "order": 1,
+      "confidence": 0.9,
+      "source": { "node_id": "node_hero", "tag": "section", "selector": "body > section" },
+      "signals": [ "heading" ],
+      "content": { "heading": "Build better sites", "text": "Supporting text", "paragraph_count": 1, "link_count": 1, "image_count": 1, "button_count": 1 },
+      "children": [],
+      "components": [ "component_001", "component_002", "component_003" ],
+      "layout": { "type": "two_column", "column_count": 2, "columns": [], "container": {}, "confidence": 0.7, "source_type": "inferred" },
+      "styles": {}
+    },
+    {
+      "id": "section_002",
+      "type": "product_grid",
+      "order": 2,
+      "confidence": 0.86,
+      "source": { "node_id": "node_products", "tag": "section", "selector": "body > section:nth-of-type(2)" },
+      "signals": [ "repeated_product_structures" ],
+      "content": { "heading": "Products", "text": "", "paragraph_count": 0, "link_count": 0, "image_count": 2, "button_count": 2 },
+      "children": [],
+      "components": [ "component_004", "component_005" ],
+      "layout": { "type": "grid", "column_count": 2, "columns": [], "container": {}, "confidence": 0.8, "source_type": "inferred" },
+      "styles": {}
+    }
+  ],
+  "components": [
+    { "id": "component_001", "type": "heading", "role": "primary_heading", "text": "Build better sites", "source": { "node_id": "node_h1", "tag": "h1", "selector": "h1" }, "section_id": "section_001", "confidence": 0.98, "source_type": "detected", "attributes": {}, "styles": {}, "layout": { "child_count": 0 }, "children": [] },
+    { "id": "component_002", "type": "paragraph", "role": "supporting_text", "text": "Supporting text", "source": { "node_id": "node_p", "tag": "p", "selector": "p" }, "section_id": "section_001", "confidence": 0.96, "source_type": "detected", "attributes": {}, "styles": {}, "layout": { "child_count": 0 }, "children": [] },
+    { "id": "component_003", "type": "button", "role": "call_to_action", "text": "Get started", "source": { "node_id": "node_cta", "tag": "a", "selector": "a.button" }, "section_id": "section_001", "confidence": 0.9, "source_type": "detected", "attributes": {}, "styles": {}, "layout": { "child_count": 0 }, "children": [], "url": "https://example.com/contact" },
+    { "id": "component_004", "type": "product_card", "role": "repeated_or_content_card", "text": "Product One $19.00", "source": { "node_id": "node_card_1", "tag": "div", "selector": "div.card" }, "section_id": "section_002", "confidence": 0.84, "source_type": "detected", "attributes": {}, "styles": {}, "layout": { "child_count": 4 }, "children": [], "fields": { "image": "https://example.com/one.jpg", "title": "Product One", "price": "$19.00", "sale_price": null, "rating": null, "badge": null, "button": "Add to cart", "link": "https://example.com/product-one" } },
+    { "id": "component_005", "type": "product_card", "role": "repeated_or_content_card", "text": "Product Two $29.00", "source": { "node_id": "node_card_2", "tag": "div", "selector": "div.card:nth-of-type(2)" }, "section_id": "section_002", "confidence": 0.84, "source_type": "detected", "attributes": {}, "styles": {}, "layout": { "child_count": 4 }, "children": [], "fields": { "image": "https://example.com/two.jpg", "title": "Product Two", "price": "$29.00", "sale_price": null, "rating": null, "badge": null, "button": "Add to cart", "link": "https://example.com/product-two" } }
+  ],
+  "hierarchy": { "primary": [ "component_001" ], "secondary": [], "supporting": [ "component_002", "component_004", "component_005" ], "cta": [ "component_003" ], "decorative": [] },
+  "design_system": {
+    "colors": { "tokens": [ { "value": "#635bff", "usage_count": 4, "properties": [ "background" ], "selectors": [ ".btn" ], "button_background": true, "role": "primary", "confidence": 0.7, "source": "inferred" } ], "by_role": { "primary": { "value": "#635bff", "role": "primary", "confidence": 0.6, "source": "inferred", "evidence": [ ".btn" ] } } },
+    "typography": { "hierarchy": { "heading_1": { "role": "heading_1", "font_family": "Inter", "font_size": "48px", "font_weight": 700, "line_height": 1.1, "letter_spacing": null, "text_transform": null, "source": { "node_id": "node_h1", "tag": "h1", "selector": "h1" }, "confidence": 0.8, "source_type": "detected" }, "body": { "role": "body", "font_family": "Inter", "font_size": "16px", "font_weight": 400, "line_height": 1.5, "letter_spacing": null, "text_transform": null, "source": { "node_id": "node_body", "tag": "body", "selector": "body" }, "confidence": 0.8, "source_type": "detected" } }, "families": [ { "property": "font-family", "value": "Inter", "count": 3 } ], "sizes": [], "weights": [], "line_heights": [], "letter_spacing": [], "text_transform": [] },
+    "font_families": [ { "property": "font-family", "value": "Inter", "count": 3 } ],
+    "spacing": { "scale": [ "16px", "32px" ] },
+    "radius": { "scale": [ "8px" ] },
+    "shadows": [],
+    "buttons": [],
+    "containers": [],
+    "layout_rules": [],
+    "design_tokens": {}
+  },
+  "responsive": { "viewport_meta": true, "media_queries_detected": true, "breakpoints": [ { "value": "768px", "rules_count": 1, "queries": [ "(max-width: 768px)" ] } ], "rules": [ { "breakpoint": "768px", "query": "(max-width: 768px)", "changes": [ "layout_change" ], "selectors": [ ".hero" ], "rule_count": 1, "confidence": 0.68, "source_type": "detected" } ], "mobile_navigation": { "detected": true, "behavior": "unknown", "confidence": 0.58, "evidence": [], "source_type": "detected" }, "confidence": 0.72 },
+  "assets": { "stylesheets": { "discovered_count": 0, "loaded": [], "fetched_css_bytes": 0 }, "images": { "count": 2, "roles": { "product_image": 2 } }, "fonts": [], "counts": { "images_not_downloaded": true, "javascript_executed": false, "raw_css_returned": false } },
+  "confidence": { "overall": 0.8, "sections": 0.88, "components": 0.9, "design_system": 0.68, "responsive": 0.72 },
+  "warnings": [],
+  "analysis": { "phase": "2.0", "analyzed_at": "2026-01-01T00:00:00+00:00", "duration_ms": 4, "phase1_schema": "1.0" }
+}
