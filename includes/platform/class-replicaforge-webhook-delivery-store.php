@@ -378,7 +378,11 @@ class Webhook_Delivery_Store extends Collaboration_Store {
 	}
 
 	/**
-	 * Return a delivery record.
+	 * Return a delivery record by its public id.
+	 *
+	 * Cross-workspace on purpose: a delivery id is referenced from the cron worker, which has
+	 * no workspace context, and from a retry request that has already been checked against
+	 * the subscription's own workspace by the caller.
 	 *
 	 * @param string $delivery_id Delivery public id.
 	 * @return array<string, mixed>|null
@@ -390,7 +394,16 @@ class Webhook_Delivery_Store extends Collaboration_Store {
 			return null;
 		}
 
-		return $this->read_by_id( $delivery_id );
+		/*
+		 * `find( '*', … )`, not `read_by_id()`.
+		 *
+		 * `read_by_id()` looks a row up by its **sequential** `id` column. Passing a public id
+		 * there silently casts a 26-character alphanumeric string to 0, so the lookup would
+		 * return null for every valid delivery — which reads as "this delivery does not
+		 * exist" rather than as the type error it is, and would make manual retry report 404
+		 * for a delivery the console had just listed.
+		 */
+		return $this->find( '*', $delivery_id );
 	}
 
 	/**

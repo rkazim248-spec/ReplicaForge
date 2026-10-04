@@ -169,7 +169,7 @@ class Extension_Registry {
 				continue;
 			}
 
-			$known = $this->store->find( $dependency );
+			$known = $this->store->find_by_extension_id( $dependency );
 
 			if ( null === $known ) {
 				$validated['warnings'][] = sprintf(
@@ -180,7 +180,7 @@ class Extension_Registry {
 			}
 		}
 
-		$prior = $this->store->find( $id );
+		$prior = $this->store->find_by_extension_id( $id );
 
 		$state = 'active';
 
@@ -560,7 +560,22 @@ class Extension_Registry {
 			return null;
 		}
 
-		return $this->present( $this->records[ $id ] );
+		/*
+		 * `installed` is added here as well as in `all()`.
+		 *
+		 * The distinction it carries is real and worth keeping: an extension can have a stored
+		 * record without a provider object in this request, which happens whenever the provider
+		 * is only constructed when it is active. A record whose `status` is `active` but whose
+		 * `installed` is false is the state a console has to be able to report — otherwise an
+		 * operator sees "active" and concludes the extension's capabilities are callable, when
+		 * they are not, because nothing registered a provider this request.
+		 *
+		 * `all()` set it inline; `get()` did not, so the two disagreed about the same record.
+		 */
+		$presented            = $this->present( $this->records[ $id ] );
+		$presented['installed'] = isset( $this->providers[ $id ] );
+
+		return $presented;
 	}
 
 	/**

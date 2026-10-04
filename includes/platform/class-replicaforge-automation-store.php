@@ -53,7 +53,7 @@ class Automation_Store extends Collaboration_Store {
 			'extension_id',
 			'user_id',
 			'name',
-			'trigger',
+			'trigger_event',
 			'action',
 			'options',
 			'status',
@@ -78,7 +78,7 @@ class Automation_Store extends Collaboration_Store {
 			'extension_id'   => 'line',
 			'user_id'        => 'int',
 			'name'           => 'line',
-			'trigger'        => 'line',
+			'trigger_event' => 'line',
 			'action'         => 'line',
 			'options'        => 'json',
 			'status'         => 'line',
@@ -101,8 +101,21 @@ class Automation_Store extends Collaboration_Store {
 	/**
 	 * @return array<int, string>
 	 */
+	/**
+	 * Column names this store may group by.
+	 *
+	 * `trigger_event`, not `trigger`. `TRIGGER` is a MySQL reserved word, so a column with
+	 * that name fails two ways: `dbDelta` cannot parse the `CREATE TABLE`, and
+	 * `Collaboration_Store::where_clause()` interpolates column names bare (it builds
+	 * `$column . ' = %s'` with no quoting), so every `WHERE` on it would be a syntax error
+	 * too. Backticking would have meant changing that shared method for every store; renaming
+	 * costs one word and removes the hazard from the schema instead of papering over it in
+	 * the query builder.
+	 *
+	 * @return array<int, string>
+	 */
 	protected function groupable_columns() {
-		return array( 'status', 'trigger', 'action' );
+		return array( 'status', 'trigger_event', 'action' );
 	}
 
 	/* ---------------------------------------------------------------------
@@ -179,7 +192,7 @@ class Automation_Store extends Collaboration_Store {
 		if ( '' !== $public_id ) {
 			$changes = array(
 				'name'      => substr( $name, 0, 120 ),
-				'trigger'   => $trigger,
+				'trigger_event'   => $trigger,
 				'action'    => $action,
 				'options'   => $options,
 				'status'    => $status,
@@ -211,7 +224,7 @@ class Automation_Store extends Collaboration_Store {
 				'extension_id'  => $this->clean_key( $input['extension_id'] ?? '' ),
 				'user_id'       => (int) ( $input['user_id'] ?? get_current_user_id() ),
 				'name'          => substr( $name, 0, 120 ),
-				'trigger'       => $trigger,
+				'trigger_event'       => $trigger,
 				'action'        => $action,
 				'options'       => $options,
 				'status'        => $status,
@@ -233,7 +246,7 @@ class Automation_Store extends Collaboration_Store {
 				'target_type' => 'automation',
 				'target_id'   => (string) $stored['public_id'],
 				'metadata'    => array(
-					'trigger' => $trigger,
+					'trigger_event' => $trigger,
 					'action'  => $action,
 					/*
 					 * Only the names, never the options. `start_workflow` options carry a
@@ -351,7 +364,16 @@ class Automation_Store extends Collaboration_Store {
 		}
 
 		if ( '' === (string) $workspace_id || '*' === (string) $workspace_id ) {
-			return $this->read_by_id( $public_id );
+			/*
+			 * `find( '*', … )`, not `read_by_id()`.
+			 *
+			 * `read_by_id()` looks a row up by its **sequential** `id` column, so passing a
+			 * public id there casts a 26-character string to 0 and returns null for every
+			 * valid automation. The failure would read as "that automation does not exist",
+			 * which is a misleading answer to an operator looking at a row the console had
+			 * just listed a second earlier.
+			 */
+			return $this->find( '*', $public_id );
 		}
 
 		return $this->find( $this->clean_workspace( $workspace_id ), $public_id );
@@ -375,8 +397,14 @@ class Automation_Store extends Collaboration_Store {
 			$clean['status'] = (string) $args['status'];
 		}
 
+		/*
+		 * `trigger` is this method's *public* filter name — it is what a REST query string and
+		 * the console both send — and it maps onto the `trigger_event` column, because that
+		 * name is what the database is allowed to call it. The two are deliberately different:
+		 * the vocabulary is Phase 20's, and the column name is MySQL's constraint.
+		 */
 		if ( isset( $args['trigger'] ) && Platform_Limits::is_automation_trigger( $args['trigger'] ) ) {
-			$clean['trigger'] = (string) $args['trigger'];
+			$clean['trigger_event'] = (string) $args['trigger'];
 		}
 
 		if ( isset( $args['search'] ) ) {
@@ -413,7 +441,7 @@ class Automation_Store extends Collaboration_Store {
 			$workspace_id,
 			array(
 				'status'   => 'active',
-				'trigger'  => $trigger,
+				'trigger_event'  => $trigger,
 				'per_page' => Workspace_Limits::page_size( $limit > 0 ? (int) $limit : Platform_Limits::AUTOMATION_BATCH ),
 			)
 		);
@@ -488,13 +516,25 @@ class Automation_Store extends Collaboration_Store {
 				 * for one it does not handle — so a made-up type would be an automation that
 				 * fails every single time for a reason the author could not see.
 				 */
-				if ( '' === $type || ! isset( Workspace_Limits::NOTIFICATION_TYPES[ $type ] ) ) {
+				/*
+			 * `in_array()`, not `isset( …[ $type ] )`.
+			 *
+			 * `NOTIFICATION_TYPES` is a **list** - a packed array of names - so it has numeric
+			 * keys `0..15` and no name keys at all. The `isset()` form was therefore false
+			 * for *every* type, including valid ones, so all sixteen were refused; and because
+			 * the message built its list with `array_keys()`, the refusal helpfully explained
+			 * itself as "It supports: 0, 1, 2 ... 15".
+			 *
+			 * A refusal whose own explanation is unreadable is worse than no message, so both
+			 * halves are fixed together.
+			 */
+			if ( '' === $type || ! in_array( $type, array_map( 'strval', (array) Workspace_Limits::NOTIFICATION_TYPES ), true ) ) {
 					return new \WP_Error(
 						'automation_option_unknown',
 						sprintf(
 							/* translators: %s: comma-separated notification type names. */
 							__( 'That is not a notification type this site can send. It supports: %s.', 'replicaforge' ),
-							implode( ', ', array_keys( Workspace_Limits::NOTIFICATION_TYPES ) )
+							implode( ', ', array_map( 'strval', (array) Workspace_Limits::NOTIFICATION_TYPES ) )
 						),
 						array( 'status' => 400 )
 					);

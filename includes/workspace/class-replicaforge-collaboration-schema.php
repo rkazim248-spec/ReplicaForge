@@ -72,7 +72,7 @@ final class Collaboration_Schema {
 	 *
 	 * @var string
 	 */
-	const VERSION = '19.0.0';
+	const VERSION = '20.0.0';
 
 	/**
 	 * Option recording the installed table version.
@@ -108,26 +108,42 @@ final class Collaboration_Schema {
 
 			$sql = sprintf( $definition, $table ) . $this->charset();
 
-			// `dbDelta` on a table that already exists emits notices that look like
-			// failures. They are suppressed for the duration of the call only, and the
-			// outcome is then verified independently, so suppression never hides a real
-			// problem - it only stops an expected one being reported as unexpected.
+			/*
+			 * `dbDelta` on a table that already exists emits notices that look like failures.
+			 * They are suppressed for the duration of the call only, and the outcome is then
+			 * verified independently below, so suppression never hides a real problem - it only
+			 * stops an expected one being reported as unexpected.
+			 */
 			$previous = $wpdb->suppress_errors( true );
-			$result   = dbDelta( $sql );
+			dbDelta( $sql );
 			$wpdb->suppress_errors( $previous );
 
 			/*
-			 * `dbDelta` returns the columns it added, which is empty both for "already up
-			 * to date" and for "could not do it". The only trustworthy check is
-			 * afterwards: does the table exist? A plugin that believes it installed a
-			 * table and did not is worse than one that says it failed, because the first
-			 * fails later, inside a client review.
+			 * Verify the table afterwards, **unconditionally**.
+			 *
+			 * This is what the check has always been documented as doing, and until now it only
+			 * did it when `dbDelta` returned an empty array. That is a real hole, and Phase 20
+			 * found it: `dbDelta` returns the columns it created, which is non-empty on
+			 * success - but it also returned a non-empty array for a table it had silently
+			 * failed to create, because `TRIGGER` is a MySQL reserved word and the
+			 * `CREATE TABLE` would not parse. `install()` recorded the kind in `$created` and
+			 * reported `ok => true` for a table that did not exist.
+			 *
+			 * That is the worst possible shape of failure for a schema installer: the caller
+			 * believes the migration ran, the version option is written, and the missing table
+			 * surfaces much later as an unrelated "table doesn't exist" database error - which
+			 * is exactly how the Phase 15 and Phase 19 suites found it, two suites and one
+			 * phase after it was introduced.
+			 *
+			 * So the existence check no longer depends on what `dbDelta` reported. It costs one
+			 * `SHOW TABLES` per table on an install, which is not a cost worth optimising away
+			 * from a correctness guarantee - and it is the check that makes `migrate_platform()`
+			 * throwing on `! $install['ok']` actually mean something.
 			 */
-			if ( false === $result || array() === $result ) {
-				if ( ! $this->table_exists( $table ) ) {
-					$errors[ $kind ] = __( 'The table could not be created. The database user may not have CREATE permission.', 'replicaforge' );
-					continue;
-				}
+			if ( ! $this->table_exists( $table ) ) {
+				$errors[ $kind ] = __( 'The table could not be created. The database user may not have CREATE permission, or the definition may use a reserved word.', 'replicaforge' );
+				unset( $created[ $kind ] );
+				continue;
 			}
 
 			$created[ $kind ] = $table;
@@ -729,6 +745,205 @@ final class Collaboration_Schema {
 				UNIQUE KEY public_id (public_id),
 				KEY workspace_type (workspace_id, type),
 				KEY workspace_component (workspace_id, component_id)
+			)",
+			/* ---------------------------------------------------------------------
+			 * Phase 20: the developer platform.
+			 *
+			 * Six tables. The same argument as Phase 19 — each is filtered, paginated and
+			 * workspace-scoped in the developer console, so none can be served from an
+			 * option without loading the whole set for every view — plus one genuine
+			 * security difference: `api_credentials` is the only table in the plugin that
+			 * stores something derived from a secret.
+			 *
+			 * Index choices, stated because they are the queries that run:
+			 * - `api_credentials (workspace_id, status)` — the console list, and the
+			 *   live-count check behind `MAX_CREDENTIALS`.
+			 * - `api_credentials (prefix)` — the lookup on every authenticated request.
+			 *   Not UNIQUE: two credentials can legitimately share an 8-character hash
+			 *   prefix, so uniqueness there would be a bug waiting for 2^32 credentials.
+			 *   `Api_Credential_Store::authenticate()` compares with `hash_equals()` over
+			 *   the handful of rows returned.
+			 * - `webhooks (workspace_id, status)` — the console list, and the
+			 *   "which subscriptions hear this event" read on every emission.
+			 * - `webhook_deliveries (status, next_attempt_at)` — the cron's due-read.
+			 *   This index is what keeps a dormant subscription's backlog from delaying a
+			 *   live one.
+			 * - `webhook_deliveries (webhook_id, created_at)` — a subscription's history.
+			 * - `automations (workspace_id, status, trigger)` — trigger matching on every
+			 *   emission, for one workspace only.
+			 * - `events (workspace_id, created_at)` — the console's recent list, and the
+			 *   retention trim that deletes the oldest rows for one workspace.
+			 *
+			 * ### What is not stored, and why that is a schema decision
+			 *
+			 * `api_credentials` has **no `token` column** and `webhooks` has **no `secret`
+			 * column**. Those absences are the security control, not an oversight: there is
+			 * no code path that could write a credential into this table, and a
+			 * `SELECT *` — a backup, a support export, a phpmyadmin screenshot — cannot
+			 * produce a usable secret because none was ever written.
+			 *
+			 * `api_credentials.token_hash` is an HMAC from `Secure_Token::salt()` keyed on
+			 * the token, so it is not a password hash that can be brute-forced offline and
+			 * not a value that becomes the token when the salt is known elsewhere.
+			 *
+			 * A webhook's signing secret is derived, never stored at all — see
+			 * `Webhook_Signer`. Rotating it therefore means rotating the site salt, which
+			 * rotates every subscription's secret at once. That is a coarse control, and it
+			 * is the honest one available when the secret was never at rest.
+			 */
+			'api_credential' => "CREATE TABLE %s (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				public_id CHAR(26) NOT NULL,
+				workspace_id CHAR(26) NOT NULL DEFAULT '',
+				project_id VARCHAR(64) NOT NULL DEFAULT '',
+				user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				name VARCHAR(191) NOT NULL DEFAULT '',
+				prefix CHAR(8) NOT NULL DEFAULT '',
+				token_hash CHAR(64) NOT NULL DEFAULT '',
+				scopes LONGTEXT NULL,
+				status VARCHAR(32) NOT NULL DEFAULT 'active',
+				expires_at $now,
+				last_used_at $now,
+				last_used_ip CHAR(16) NOT NULL DEFAULT '',
+				request_count INT UNSIGNED NOT NULL DEFAULT 0,
+				revoked_at $now,
+				created_at $now,
+				updated_at $now,
+				PRIMARY KEY  (id),
+				UNIQUE KEY public_id (public_id),
+				KEY workspace_status (workspace_id, status),
+				KEY prefix (prefix),
+				KEY user_id (user_id)
+			)",
+
+			'webhook' => "CREATE TABLE %s (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				public_id CHAR(26) NOT NULL,
+				workspace_id CHAR(26) NOT NULL DEFAULT '',
+				project_id VARCHAR(64) NOT NULL DEFAULT '',
+				user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				name VARCHAR(191) NOT NULL DEFAULT '',
+				endpoint TEXT NULL,
+				events LONGTEXT NULL,
+				status VARCHAR(32) NOT NULL DEFAULT 'active',
+				failure_count INT UNSIGNED NOT NULL DEFAULT 0,
+				consecutive_failures INT UNSIGNED NOT NULL DEFAULT 0,
+				last_delivered_at $now,
+				last_failure_at $now,
+				last_error TEXT NULL,
+				last_signature CHAR(32) NOT NULL DEFAULT '',
+				created_at $now,
+				updated_at $now,
+				PRIMARY KEY  (id),
+				UNIQUE KEY public_id (public_id),
+				KEY workspace_status (workspace_id, status),
+				KEY project_id (project_id)
+			)",
+
+			'webhook_delivery' => "CREATE TABLE %s (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				public_id CHAR(26) NOT NULL,
+				workspace_id CHAR(26) NOT NULL DEFAULT '',
+				webhook_id CHAR(26) NOT NULL DEFAULT '',
+				event_id VARCHAR(64) NOT NULL DEFAULT '',
+				event_type VARCHAR(64) NOT NULL DEFAULT '',
+				event_version VARCHAR(16) NOT NULL DEFAULT '',
+				signature CHAR(64) NOT NULL DEFAULT '',
+				status VARCHAR(32) NOT NULL DEFAULT 'pending',
+				attempts INT UNSIGNED NOT NULL DEFAULT 0,
+				next_attempt_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				delivered_at $now,
+				response_code INT NOT NULL DEFAULT 0,
+				error TEXT NULL,
+				dropped TINYINT(1) NOT NULL DEFAULT 0,
+				created_at $now,
+				updated_at $now,
+				PRIMARY KEY  (id),
+				UNIQUE KEY public_id (public_id),
+				KEY status_next (status, next_attempt_at),
+				KEY webhook_created (webhook_id, created_at),
+				KEY event_id (event_id)
+			)",
+
+			// Metadata only. The provider object is never stored, never serialised and
+			// never rehydrated: it exists because already-trusted PHP constructed it this
+			// request. So even a full compromise of this table yields a list of names and
+			// a set of permissions, and every permission in it is still checked against
+			// `Platform_Limits::EXTENSION_PERMISSIONS` at call time.
+			'extension' => "CREATE TABLE %s (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				public_id CHAR(26) NOT NULL,
+				extension_id VARCHAR(64) NOT NULL DEFAULT '',
+				status VARCHAR(32) NOT NULL DEFAULT 'registered',
+				capabilities LONGTEXT NULL,
+				permissions LONGTEXT NULL,
+				manifest LONGTEXT NULL,
+				incompatibilities LONGTEXT NULL,
+				failure_count INT UNSIGNED NOT NULL DEFAULT 0,
+				last_error TEXT NULL,
+				created_at $now,
+				updated_at $now,
+				PRIMARY KEY  (id),
+				UNIQUE KEY public_id (public_id),
+				UNIQUE KEY extension_id (extension_id),
+				KEY status (status)
+			)",
+
+			// An automation is a definition, not code: a trigger and an action, both from
+			// closed vocabularies. There is no column for a callable, a template, a query or
+			// a URL, so there is nothing an automation could be *changed into* by editing
+			// this table.
+			'automation' => "CREATE TABLE %s (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				public_id CHAR(26) NOT NULL,
+				workspace_id CHAR(26) NOT NULL DEFAULT '',
+				project_id VARCHAR(64) NOT NULL DEFAULT '',
+				extension_id VARCHAR(64) NOT NULL DEFAULT '',
+				user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				name VARCHAR(191) NOT NULL DEFAULT '',
+				trigger_event VARCHAR(64) NOT NULL DEFAULT '',
+				action VARCHAR(32) NOT NULL DEFAULT '',
+				options LONGTEXT NULL,
+				status VARCHAR(32) NOT NULL DEFAULT 'active',
+				run_count INT UNSIGNED NOT NULL DEFAULT 0,
+				failure_count INT UNSIGNED NOT NULL DEFAULT 0,
+				last_run_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				last_error TEXT NULL,
+				created_at $now,
+				updated_at $now,
+				PRIMARY KEY  (id),
+				UNIQUE KEY public_id (public_id),
+				KEY workspace_trigger (workspace_id, status, trigger_event),
+				KEY workspace_status (workspace_id, status)
+			)",
+
+			// `ancestry` and `depth` are the columns that make loop prevention enforceable.
+			// `depth` is an INT so the check is a comparison rather than a count of an
+			// array, and `correlation_id` is indexed because it is what a developer pastes
+			// from a failed webhook delivery to find the request that caused it.
+			'event' => "CREATE TABLE %s (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				public_id CHAR(26) NOT NULL,
+				event_id VARCHAR(64) NOT NULL DEFAULT '',
+				workspace_id CHAR(26) NOT NULL DEFAULT '',
+				project_id VARCHAR(64) NOT NULL DEFAULT '',
+				resource_id VARCHAR(64) NOT NULL DEFAULT '',
+				event_type VARCHAR(64) NOT NULL DEFAULT '',
+				version VARCHAR(16) NOT NULL DEFAULT '',
+				actor_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+				correlation_id VARCHAR(64) NOT NULL DEFAULT '',
+				ancestry LONGTEXT NULL,
+				depth INT UNSIGNED NOT NULL DEFAULT 0,
+				status VARCHAR(32) NOT NULL DEFAULT 'recorded',
+				data LONGTEXT NULL,
+				created_at $now,
+				PRIMARY KEY  (id),
+				UNIQUE KEY public_id (public_id),
+				KEY workspace_created (workspace_id, created_at),
+				KEY event_id (event_id),
+				KEY correlation_id (correlation_id),
+				KEY workspace_type (workspace_id, event_type),
+				KEY status (status)
 			)",
 		);
 	}

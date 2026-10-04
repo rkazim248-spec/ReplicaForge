@@ -190,14 +190,49 @@ $schema = new ReplicaForge\Collaboration_Schema();
 $status = $schema->status();
 
 check( ! empty( $status['ok'] ), 'every collaboration table exists' );
-check( in_array( Workspace_Store::class, array( 'ReplicaForge\\Collaboration_Schema' ), true ) || true, 'the schema class loads' );
+check( class_exists( Workspace_Store::class ), 'the workspace store class loads' );
 
 foreach ( array( 'templates', 'template_version', 'template_component' ) as $kind ) {
 	check( '' !== ReplicaForge\Workspace_Limits::table( $kind ), 'the ' . $kind . ' table has a declared name' );
 }
 
-check( '19.0.0' === ReplicaForge\Collaboration_Schema::VERSION, 'the collaboration schema version is 19.0.0' );
-check( '19.0.0' === ReplicaForge\Schema::DB_SCHEMA_VERSION, 'the database schema version is 19.0.0' );
+/*
+ * The schema version is asserted as *consistency*, not as a literal.
+ *
+ * This suite originally hardcoded '19.0.0' in both places, and Phase 20 — which legitimately
+ * moved both constants to 20.0.0 — failed on two assertions that were only ever checking that
+ * a number had not drifted. That is the wrong test: it fails on every future phase for a reason
+ * that says nothing about templates, and it cannot catch the failure it looks like it catches.
+ *
+ * What is actually worth asserting here is the invariant the two constants are supposed to
+ * share, which Phase 15 already asserts directly:
+ *
+ *   - `Collaboration_Schema::VERSION` and `Schema::DB_SCHEMA_VERSION` agree;
+ *   - `DB_SCHEMA_VERSION` equals the newest declared migration's target, so a version bump
+ *     that forgets to add a migration fails here;
+ *   - neither has gone *backwards* from what Phase 19 introduced.
+ *
+ * The lower bound is kept because it is a real assertion: a schema version that decreased
+ * would mean a site could skip migrations on the way back up.
+ */
+$rf19_declared = array_column( ( new ReplicaForge\Migrator() )->migrations(), 'to' );
+$rf19_newest   = (string) end( $rf19_declared );
+
+check(
+	ReplicaForge\Collaboration_Schema::VERSION === ReplicaForge\Schema::DB_SCHEMA_VERSION,
+	'the collaboration table schema and the migration version agree'
+);
+
+check(
+	ReplicaForge\Schema::DB_SCHEMA_VERSION === $rf19_newest,
+	'the declared schema version matches the newest migration'
+);
+
+check(
+	version_compare( ReplicaForge\Schema::DB_SCHEMA_VERSION, '19.0.0', '>=' ),
+	'the schema version has not gone backwards below what Phase 19 introduced'
+);
+
 check( '' === ReplicaForge\Workspace_Limits::table( 'not_a_kind' ), 'an unknown entity has no table name' );
 
 $ready = new ReflectionMethod( Template_Store::class, 'ready' );

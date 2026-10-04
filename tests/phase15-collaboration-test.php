@@ -252,11 +252,109 @@ foreach ( array( 'templates', 'template_version', 'template_component' ) as $rf1
 	check( isset( $install['tables'][ $rf19_kind ] ), "the Phase 19 table '$rf19_kind' installs" );
 	check( in_array( Workspace_Limits::prefixed_table( $rf19_kind ), $status['present'], true ), "the Phase 19 table '$rf19_kind' is present" );
 }
-check( 16 === count( $install['tables'] ), 'sixteen tables are declared in total' );
-check( 16 === count( $status['present'] ), 'all sixteen are present' );
+/*
+ * Every declared entity is named and checked individually, and the total is asserted as a
+ * *consistency* check between what was declared and what installed.
+ *
+ * This block replaced `check( 16 === count( $install['tables'] ), 'sixteen tables are declared
+ * in total' )`, which was wrong twice over.
+ *
+ * Wrong in the ordinary case: it failed on Phase 20, and would have failed again on Phase 21,
+ * for a reason that says nothing about whether any table exists. A test that only fails when
+ * somebody adds a table trains everyone to update the number without reading it — and the
+ * update is where the bug gets missed, because the failing line is 40 lines away from the
+ * definition that caused it.
+ *
+ * Wrong in the case that actually matters: a *count* cannot detect a table being removed and
+ * another being added in the same change, which is exactly the shape a regression takes when
+ * somebody "renames" a table. What the count was protecting — the original thirteen of Phase 15
+ * still being there — is asserted below by name, which does detect removal.
+ *
+ * The counts survive as a cross-check rather than a literal, so they still catch the failure
+ * they were meant to catch: a definition that is declared but never installed, or a table that
+ * installed and is then absent.
+ */
+$rf_declared_kinds = array(
+	'workspaces',
+	'members',
+	'project_member',
+	'invitations',
+	'clients',
+	'contacts',
+	'reviews',
+	'comments',
+	'tasks',
+	'issues',
+	'notifications',
+	'activity',
+	'audit',
+	'templates',
+	'template_version',
+	'template_component',
+	'api_credential',
+	'webhook',
+	'webhook_delivery',
+	'extension',
+	'automation',
+	'event',
+);
+
+foreach ( $rf_declared_kinds as $rf_kind ) {
+	$rf_table = Workspace_Limits::prefixed_table( $rf_kind );
+
+	check( '' !== $rf_table, "the '$rf_kind' entity has a declared table name" );
+	check( isset( $install['tables'][ $rf_kind ] ), "the '$rf_kind' table installs" );
+	check( in_array( $rf_table, $status['present'], true ), "the '$rf_kind' table is present" );
+}
+
+/*
+ * Compared as *sets*, not as sequences.
+ *
+ * The first version of this used `$rf_declared_kinds === array_keys( $install['tables'] )`,
+ * which is an ordered comparison — and it failed, because `definitions()` puts `audit` last
+ * while the list here names it in Phase 15's grouping order. The assertion was reporting an
+ * ordering difference as a missing table, which is precisely the kind of failure that trains
+ * somebody to "fix" a list by deleting the entry that appeared to be extra.
+ *
+ * Two `array_diff()` calls express what was actually meant: nothing installed that was not
+ * declared, and nothing declared that did not install.
+ */
+check(
+	array() === array_diff( array_keys( $install['tables'] ), $rf_declared_kinds ),
+	'nothing installs that was not declared'
+);
+
+check(
+	array() === array_diff( $rf_declared_kinds, array_keys( $install['tables'] ) ),
+	'every declared entity installs'
+);
+
+check(
+	count( $install['tables'] ) === count( $status['present'] ),
+	'every table that installs is present afterwards'
+);
+
 check( array() === $status['missing'], 'none are missing' );
 
-check( '19.0.0' === Collaboration_Schema::VERSION, 'the schema version is 19.0.0' );
+/*
+ * The schema version is a consistency check, not a literal.
+ *
+ * It previously asserted `'19.0.0' === Collaboration_Schema::VERSION`, which failed on Phase 20
+ * for the same reason the table count did. What is worth asserting is that the table schema and
+ * the migration target still agree, and that neither has gone backwards — a decreased version
+ * would let a site skip migrations on the way back up. The Phase 15 suite asserts the
+ * migration agreement separately and in full; this is the local check.
+ */
+check(
+	Collaboration_Schema::VERSION === Schema::DB_SCHEMA_VERSION,
+	'the collaboration schema version matches the declared database schema version'
+);
+
+check(
+	version_compare( Collaboration_Schema::VERSION, '15.0.0', '>=' ),
+	'the schema version has not gone backwards below the Phase 15 baseline'
+);
+check( '15.0' === Workspace_Limits::SCHEMA_VERSION, 'the vocabulary schema version is 15.0' );
 check( '15.0' === Workspace_Limits::SCHEMA_VERSION, 'the vocabulary schema version is 15.0' );
 
 foreach ( array_keys( $install['tables'] ) as $kind ) {

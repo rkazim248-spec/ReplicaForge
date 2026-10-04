@@ -212,7 +212,7 @@ final class Webhook_Delivery {
 		 * makes on a schedule with no human present.
 		 */
 		if ( '' === $endpoint || ! Security::is_safe_public_reference( $endpoint ) ) {
-			$this->fail( $delivery_id, $webhook_id, $attempt, 'endpoint_unsafe', 0 );
+			$this->fail( $delivery_id, $webhook_id, $attempt, 'endpoint_unsafe', 0, array(), $delivery );
 
 			return array( 'state' => 'failed', 'reason' => 'endpoint_unsafe' );
 		}
@@ -221,7 +221,7 @@ final class Webhook_Delivery {
 		$body  = $this->deliveries->payload_for( $event );
 
 		if ( '' === $body ) {
-			$this->fail( $delivery_id, $webhook_id, $attempt, 'payload_unencodable', 0 );
+			$this->fail( $delivery_id, $webhook_id, $attempt, 'payload_unencodable', 0, array(), $delivery );
 
 			return array( 'state' => 'failed', 'reason' => 'payload_unencodable' );
 		}
@@ -238,7 +238,7 @@ final class Webhook_Delivery {
 		$response = $this->post( $endpoint, $body, $signed, $event );
 
 		if ( ! is_array( $response ) ) {
-			$this->fail( $delivery_id, $webhook_id, $attempt, 'transport_error', 0 );
+			$this->fail( $delivery_id, $webhook_id, $attempt, 'transport_error', 0, array(), $delivery );
 
 			return array( 'state' => 'failed', 'reason' => 'transport_error' );
 		}
@@ -270,7 +270,7 @@ final class Webhook_Delivery {
 			return array( 'state' => 'delivered', 'code' => $code );
 		}
 
-		$this->fail( $delivery_id, $webhook_id, $attempt, (string) ( $response['error'] ?? 'http_error' ), $code, $response );
+		$this->fail( $delivery_id, $webhook_id, $attempt, (string) ( $response['error'] ?? 'http_error' ), $code, $response, $delivery );
 
 		return array( 'state' => 'failed', 'reason' => (string) ( $response['error'] ?? 'http_error' ), 'code' => $code );
 	}
@@ -284,9 +284,10 @@ final class Webhook_Delivery {
 	 * @param string              $reason      Reason.
 	 * @param int                 $code        HTTP status, or 0.
 	 * @param array<string, mixed> $response    The raw response, for `Retry-After`.
+	 * @param array<string, mixed> $delivery    The delivery record, for the `…_failed` hook.
 	 * @return void
 	 */
-	private function fail( $delivery_id, $webhook_id, $attempt, $reason, $code, array $response = array() ) {
+	private function fail( $delivery_id, $webhook_id, $attempt, $reason, $code, array $response = array(), array $delivery = array() ) {
 		$exhausted = $attempt >= Platform_Limits::WEBHOOK_MAX_ATTEMPTS;
 
 		/*
@@ -320,6 +321,18 @@ final class Webhook_Delivery {
 		 * @param array<string, mixed> $delivery   Delivery record.
 		 * @param string              $reason     Why.
 		 * @param bool                $exhausted  Whether this was the last attempt.
+		 */
+		/*
+		 * `$delivery` is a parameter rather than a captured variable.
+		 *
+		 * The previous version referenced `$delivery` inside this method while its signature
+		 * only received `$delivery_id` — so the documented `@param array $delivery` on the hook
+		 * below described a value that was never in scope. Under `error_reporting(E_ALL)` that
+		 * is an "Undefined variable" notice on every failed delivery, and the hook fired with a
+		 * null where a delivery record was promised to any extension listening for it.
+		 *
+		 * Passing it in is the fix: the hook's documented contract and the value it actually
+		 * receives are now the same thing.
 		 */
 		do_action( 'replicaforge_webhook_failed', $webhook_id, $delivery, (string) $reason, $exhausted );
 

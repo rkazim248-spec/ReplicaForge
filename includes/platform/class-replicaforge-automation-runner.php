@@ -189,7 +189,7 @@ final class Automation_Runner {
 		}
 
 		$event = array(
-			'event_type'     => (string) $automation['trigger'],
+			'event_type'     => (string) $automation['trigger_event'],
 			'event_id'       => Request_Context::make_id( 'evt', 10 ),
 			'workspace_id'   => (string) $automation['workspace_id'],
 			'project_id'     => (string) ( $automation['project_id'] ?? '' ),
@@ -673,7 +673,7 @@ final class Automation_Runner {
 		$failing    = 0;
 
 		foreach ( $page['items'] as $automation ) {
-			$trigger = (string) $automation['trigger'];
+			$trigger = (string) $automation['trigger_event'];
 			$by_trigger[ $trigger ] = ( $by_trigger[ $trigger ] ?? 0 ) + 1;
 
 			if ( 'failing' === (string) $automation['status'] ) {

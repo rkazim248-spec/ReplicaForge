@@ -38,6 +38,7 @@ require_once REPLICAFORGE_PATH . 'includes/css/class-replicaforge-css-value-pars
 require_once REPLICAFORGE_PATH . 'includes/layout/class-replicaforge-layout-engine.php';
 require_once REPLICAFORGE_PATH . 'includes/visual/class-replicaforge-visual-effects.php';
 require_once REPLICAFORGE_PATH . 'includes/security/class-replicaforge-svg-sanitizer.php';
+require_once REPLICAFORGE_PATH . 'includes/security/class-replicaforge-security-audit.php';
 require_once REPLICAFORGE_PATH . 'includes/tokens/class-replicaforge-token-engine.php';
 require_once REPLICAFORGE_PATH . 'includes/projects/class-replicaforge-project-repository.php';
 
@@ -369,6 +370,50 @@ require_once REPLICAFORGE_PATH . 'includes/templates/class-replicaforge-template
 require_once REPLICAFORGE_PATH . 'includes/templates/class-replicaforge-template-quality.php';
 require_once REPLICAFORGE_PATH . 'includes/templates/class-replicaforge-template-api.php';
 require_once REPLICAFORGE_PATH . 'includes/templates/class-replicaforge-template-admin.php';
+
+/* ---------------------------------------------------------------------------
+ * Phase 20: the developer extensibility platform.
+ *
+ * Loaded last, and after both Phase 17 (orchestrator) and Phase 19 (templates), because
+ * almost everything here composes them rather than standing alone:
+ *
+ * - `Automation_Runner::start_workflow()` calls Phase 17's `Workflow_Executor::run()`. It
+ *   does not have its own stages, gates, retries or budgets, and loading it before the
+ *   orchestrator would put a class whose only job is to delegate above the thing it
+ *   delegates to.
+ * - `Platform_Limits::backoff_seconds()` delegates to `Job_Limits::backoff_seconds()`, so a
+ *   webhook and a job back off on one curve.
+ * - Every store extends Phase 15's `Collaboration_Store`, which PHP resolves when the
+ *   child's file is *included* rather than when the method runs — so this block has to sit
+ *   after the workspace block above.
+ * - `Api_Credential_Store` and `Webhook_Signer` use Phase 15's `Secure_Token`, and
+ *   `Developer_Api` composes `Workspace_Store`, `Project_Repository` and
+ *   `Permission_Manager`.
+ *
+ * Within the block the order is the same shape: limits and interfaces first (they have no
+ * dependencies), then the pure logic that depends only on them (configuration, manifest,
+ * signer, rate limiter), then the stores (which need the shared base class), then the
+ * orchestration pieces, and finally the HTTP surface.
+ */
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-platform-limits.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/interface-replicaforge-extension-provider.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-extension-configuration.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-extension-manifest.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-extension-store.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-extension-registry.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-api-credential-store.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-webhook-signer.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-webhook-store.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-webhook-delivery-store.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-webhook-delivery.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-event-store.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-event-dispatcher.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-automation-store.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-automation-runner.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-rate-limiter.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-api-authenticator.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-developer-api.php';
+require_once REPLICAFORGE_PATH . 'includes/platform/class-replicaforge-developer-admin.php';
 
 require_once REPLICAFORGE_PATH . 'includes/class-replicaforge-analyzer.php';
 require_once REPLICAFORGE_PATH . 'includes/class-replicaforge-rest-api.php';

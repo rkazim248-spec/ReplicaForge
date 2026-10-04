@@ -170,7 +170,22 @@ class Event_Store extends Collaboration_Store {
 	 * @return array<string, mixed>|null
 	 */
 	public function read( $event_id ) {
-		$event_id = substr( preg_replace( '/[^A-Za-z0-9]/', '', (string) $event_id ), 0, 64 );
+		/*
+		 * The sanitising pattern keeps underscores.
+		 *
+		 * This was `'/[^A-Za-z0-9]/'`, which stripped them — and every event id ReplicaForge
+		 * issues *contains* one, because `Request_Context::make_id( 'evt', 10 )` produces
+		 * `evt_640bd7750dd…`. The lookup therefore searched for `evt640bd7750dd…` while the row
+		 * stored `evt_640bd7750dd…`, so `read()` returned null for every event the platform
+		 * had recorded.
+		 *
+		 * The failure was silent and consequential: `Webhook_Delivery::event_for()` calls this
+		 * on every delivery, and its null branch substitutes a placeholder payload — so a
+		 * webhook would have received "the full event is no longer retained" for an event
+		 * recorded a moment earlier, while the delivery log showed a perfectly valid event id
+		 * that could not be looked up.
+		 */
+		$event_id = substr( preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $event_id ), 0, 64 );
 
 		if ( '' === $event_id || ! $this->ready() ) {
 			return null;

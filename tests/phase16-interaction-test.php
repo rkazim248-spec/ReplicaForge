@@ -711,13 +711,32 @@ rf16_check( $rf16_plugin->visual_api() instanceof \ReplicaForge\Visual_Api, 'and
 
 echo "\n== 30. Phase 2 analysis is unchanged apart from added attributes ==\n";
 
-$rf16_ctx = rf16_context( $rf16_dom, '<button aria-selected="true" aria-roledescription="carousel" data-ride="carousel" tabindex="0">x</button>' );
+/*
+ * The fixture has to actually contain the attributes the assertions name.
+ *
+ * This block used to read
+ *
+ *     rf16_check( in_array( $rf16_pre, $rf16_found_attrs, true ) || true, ... );
+ *
+ * which is unconditionally true, so it asserted nothing - and it went on asserting six
+ * attributes that the markup beside it did not contain. `build()` was returning
+ * `aria-selected`, `aria-roledescription`, `data-ride` and `tabindex` for this element, and
+ * the block checked for `aria-expanded`, `aria-controls`, `aria-haspopup`, `role`,
+ * `data-toggle` and `required`. Six assertions, all guaranteed to pass, none of which could
+ * ever have failed.
+ *
+ * The markup is now a disclosure-style control that genuinely carries all of them, which is
+ * what the section title means by "Phase 2 analysis is unchanged apart from added
+ * attributes": the attributes Phase 16 relies on are all still collected, and this is the
+ * guard that a Phase 2 change cannot quietly narrow them.
+ */
+$rf16_ctx = rf16_context( $rf16_dom, '<button aria-expanded="false" aria-controls="rf16-panel" aria-haspopup="true" role="button" data-toggle="collapse" required type="button" aria-selected="true" aria-roledescription="carousel" data-ride="carousel" tabindex="0">x</button>' );
 $rf16_found_attrs = array();
 foreach ( $rf16_ctx['nodes'] as $rf16_node ) {
 	$rf16_found_attrs = array_merge( $rf16_found_attrs, array_keys( (array) $rf16_node['attributes'] ) );
 }
 foreach ( array( 'aria-expanded', 'aria-controls', 'aria-haspopup', 'role', 'data-toggle', 'required' ) as $rf16_pre ) {
-	rf16_check( in_array( $rf16_pre, $rf16_found_attrs, true ) || true, 'the pre-existing attribute ' . $rf16_pre . ' is still harvested' );
+	rf16_check( in_array( $rf16_pre, $rf16_found_attrs, true ), 'the pre-existing attribute ' . $rf16_pre . ' is still harvested' );
 }
 $rf16_ride = null;
 foreach ( $rf16_ctx['nodes'] as $rf16_node ) {

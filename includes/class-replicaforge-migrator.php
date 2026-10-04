@@ -113,6 +113,27 @@ final class Migrator {
 			'run'     => array( $this, 'migrate_templates' ),
 			'summary' => 'Add the template library tables, the template capability grants, and the design-token store. Nothing existing is altered and nothing is removed.',
 			),
+	/*
+	 * Phase 20.
+	 *
+	 * A separate step from 19.0.0 rather than a fold into the 15.0.0 entry, for a
+	 * reason that matters after the fact: folding them would mean a site that already
+	 * completed 19.0.0 would never run the Phase 20 half, because `Migrator::run()`
+	 * skips a step whose `to` is at or below the recorded version. Two entries is the
+	 * only thing that makes both halves run for a site arriving from 15.0.0 *and* for
+	 * one already at 19.0.0.
+	 *
+	 * Additive, like every step here: `Collaboration_Schema::install()` is `dbDelta`
+	 * over all definitions, so this adds six tables, alters none of the nineteen that
+	 * exist, and deletes nothing. `api_credentials` and `webhooks` have no `token` or
+	 * `secret` column, and this migration writes no rows into either.
+	 */
+	array(
+		'from'    => '19.0.0',
+		'to'      => '20.0.0',
+		'run'     => array( $this, 'migrate_platform' ),
+		'summary' => 'Add the developer platform tables for API credentials, webhooks, webhook deliveries, extensions, automations and events. Creates no data and removes nothing.',
+	),
 		);
 	}
 
@@ -850,6 +871,98 @@ final class Migrator {
 		$report['note'] = 'The template library is empty. Templates are created from your own projects.';
 
 		update_option( 'replicaforge_template_migration', $report, false );
+
+		return $report;
+	}
+
+	/**
+	 * Install the Phase 20 developer-platform tables.
+	 *
+	 * ### One step from 19.0.0, not one per phase
+	 *
+	 * Phases 20 changed the schema once. Writing a migration per phase would mean a site
+	 * upgrading through 20.0.0 runs three near-identical `dbDelta()` passes, and the report
+	 * would carry three entries saying the same thing.
+	 *
+	 * ### This migration creates no data
+	 *
+	 * No credential, no webhook, no automation, no event, no extension record. An empty
+	 * library is the correct post-install state, and a migration that invented rows would put
+	 * objects in a user's account that they did not ask for.
+	 *
+	 * The one thing it *does* record is the absence, because "no credentials exist" and "the
+	 * credential feature is not installed" must not look identical to an administrator
+	 * reading the console.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function migrate_platform() {
+		$report = array(
+			'tables'       => array(),
+			'granted'      => array(),
+			'vocabularies' => array(),
+			'note'         => '',
+		);
+
+		$schema  = new Collaboration_Schema();
+		$install = $schema->install();
+
+		$report['tables'] = array_keys( (array) ( $install['tables'] ?? array() ) );
+
+		if ( empty( $install['ok'] ) ) {
+			/*
+			 * Deliberately not swallowed. `Migrator::run()` only records the schema version
+			 * when the callable returns, so a throw here leaves the version unmoved and the
+			 * next request retries — the self-healing path the `Migrator` docblock describes.
+			 *
+			 * Failing loudly also matters here specifically: without these tables the developer
+			 * console would render and every action would refuse, which looks like a
+			 * permissions bug rather than a missing migration.
+			 */
+			$report['note'] = 'The developer platform tables could not be created. The migration will be retried on the next request.';
+
+			throw new \RuntimeException( 'replicaforge_platform_installation_failed' );
+		}
+
+		/*
+		 * No capability grants to backfill.
+		 *
+		 * The six Phase 20 workspace capabilities (`api.credentials.read`, `api.webhooks.manage`,
+		 * and so on) are resolved by role from `Workspace_Limits::ROLE_CAPS` at check time, so
+		 * there is no stored row for them and nothing to grant. `Capabilities::grant_default_roles()`
+		 * is re-run anyway because it is idempotent and it covers the plugin's WordPress roles,
+		 * which *are* stored.
+		 *
+		 * The audit actions added in Phase 20 (`api_credential_created` and friends) are part of
+		 * `Workspace_Limits::AUDIT_EVENTS` for the same reason — a closed vocabulary read at
+		 * write time, not a permission row.
+		 */
+		( new Capabilities() )->grant_default_roles();
+
+		$report['granted'] = array(
+			'wordpress_roles' => 'granted',
+			'workspace_roles' => 'inherent',
+		);
+
+		/*
+		 * The counts, so the console's "did this install" check is evidence rather than an
+		 * assumption. `Workspace_Limits::capabilities()` is the single master vocabulary the
+		 * permission manager validates against.
+		 */
+		$report['capability_count'] = count( Workspace_Limits::capabilities() );
+		$report['vocabularies']     = array(
+			'scopes'            => count( Platform_Limits::API_SCOPES ),
+			'gate_mappings'      => count( Platform_Limits::GATE_SCOPES ),
+			'events'            => count( Platform_Limits::EVENTS ),
+			'extension_caps'    => count( Platform_Limits::EXTENSION_CAPABILITIES ),
+			'extension_perms'   => count( Platform_Limits::EXTENSION_PERMISSIONS ),
+			'automation_triggers' => count( Platform_Limits::AUTOMATION_TRIGGERS ),
+			'automation_actions' => count( Platform_Limits::AUTOMATION_ACTIONS ),
+		);
+
+		$report['note'] = 'No API credentials, webhooks, automations or extensions exist. Create them in the developer console.';
+
+		update_option( 'replicaforge_platform_migration', $report, false );
 
 		return $report;
 	}

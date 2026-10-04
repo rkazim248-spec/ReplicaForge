@@ -41,7 +41,7 @@ final class Schema {
 	 * which the migration backfills onto existing jobs so a job created before this
 	 * phase is resumable rather than opaque.
 	 */
-	const DB_SCHEMA_VERSION = '19.0.0';
+	const DB_SCHEMA_VERSION = '20.0.0';
 
 	/**
 	 * Phase 1 frontend analysis representation version.

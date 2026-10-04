@@ -224,7 +224,7 @@ check( ! $discovery->permits( 'https://example.com/admin/users', $origin ), 'And
 // `/administration` is ambiguous and the security reading wins. Asserted explicitly
 // so the decision is visible rather than an accident of the deny-list.
 check( ! $discovery->permits( 'https://example.com/administration/', $origin ), '/administration is refused even though some sites have a content page there, because the worse failure is crawling an admin panel the user cannot detect.' );
-check( ! $discovery->permits( 'https://example.com/sitemap.xml', $origin ) || true, 'A sitemap address is permitted, since sitemaps are a discovery source rather than a private page.' );
+check( $discovery->permits( 'https://example.com/sitemap.xml', $origin ), 'A sitemap address is permitted, since sitemaps are a discovery source rather than a private page.' );
 
 same( Site_Limits::MAX_LINKS_PER_PAGE, 300, 'Links read from one page are bounded, so a page with ten thousand links cannot make ReplicaForge allocate its way through them.' );
 check( Site_Limits::MAX_FRONTIER <= 500, 'The discovery frontier is bounded, so the page limit is reached by a real stop rather than by exhausting memory first.' );

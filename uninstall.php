@@ -57,6 +57,13 @@ function replicaforge_uninstall() {
 		'templates'          => 'replicaforge_templates',
 		'template_version'   => 'replicaforge_template_versions',
 		'template_component' => 'replicaforge_template_components',
+		// Phase 20: the developer platform.
+		'api_credential'     => 'replicaforge_api_credentials',
+		'webhook'            => 'replicaforge_webhooks',
+		'webhook_delivery'   => 'replicaforge_webhook_deliveries',
+		'extension'          => 'replicaforge_extensions',
+		'automation'         => 'replicaforge_automations',
+		'event'              => 'replicaforge_events',
 	);
 
 	// Options and settings ReplicaForge owns outright.
@@ -119,6 +126,22 @@ function replicaforge_uninstall() {
 			'replicaforge_global_style_ownership',
 			'replicaforge_websites',
 			'replicaforge_workflows',
+			// Phase 20. `replicaforge_developer_notices` is swept for the same reason the
+			// AI settings are: it is the transient the console uses to hand a one-time API
+			// token to the screen that created it, so it can hold a usable credential. The
+			// render path clears it as soon as it is printed, but a session that created a
+			// credential and never reloaded the page would leave it behind — and an
+			// uninstall is exactly the moment that has to not survive.
+			'replicaforge_extension_settings',
+			'replicaforge_rate_buckets',
+			'replicaforge_developer_notices',
+			'replicaforge_platform_migration',
+			// Phase 21. The security findings registry. It is plugin bookkeeping rather
+			// than user data, so it does not belong in the archive - and a finding whose
+			// `affected` list names a file path has no meaning once the plugin's code is
+			// gone, so keeping it would only leave stale references behind to mislead a
+			// later reinstall.
+			'replicaforge_security_findings',
 		) as $option
 	) {
 		if ( delete_option( $option ) ) {
@@ -266,6 +289,24 @@ function replicaforge_uninstall() {
 		'templates',
 		'template_version',
 		'template_component',
+		// Phase 20: the developer platform.
+		//
+		// Dropped on the same reasoning as everything above. `api_credentials` is the
+		// strongest case in the file: it holds the HMACs that authorise external systems,
+		// and leaving them behind means a database dump taken after somebody removed the
+		// plugin still contains material that was trusted to act as a person. It holds no
+		// plaintext token, so the exposure is bounded — but it is exposure, and removing
+		// the plugin should end it.
+		//
+		// `events` and `webhook_deliveries` are audit records rather than configuration,
+		// and they are dropped for the same reason the audit table is: a table nobody will
+		// remember to clean up is not a retention policy.
+		'api_credential',
+		'webhook',
+		'webhook_delivery',
+		'extension',
+		'automation',
+		'event',
 	);
 
 	$dropped = 0;

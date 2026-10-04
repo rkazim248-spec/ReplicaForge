@@ -66,6 +66,19 @@ final class Developer_Api {
 	const BASE = 'replicaforge/v1/developer';
 
 	/**
+	 * WordPress capability required to reach this API at all.
+	 *
+	 * Deliberately the same capability the console's menu uses, and deliberately *weak*: it
+	 * answers "may this person open the developer area", not "may this person read webhooks
+	 * in this workspace". The per-route check is the scope's own workspace capability, resolved
+	 * in {@see self::gate()}. Splitting the two is what lets a member see that a webhook exists
+	 * without being able to create one.
+	 *
+	 * @var string
+	 */
+	const SESSION_CAPABILITY = 'replicaforge_use';
+
+	/**
 	 * Authenticator.
 	 *
 	 * @var Api_Authenticator
@@ -189,53 +202,82 @@ final class Developer_Api {
 	 * ------------------------------------------------------------------ */
 
 	/**
+	 * Route scope declarations, keyed by route path.
+	 *
+	 * Populated by {@see self::register_routes()} and read by {@see self::gate()}.
+	 *
+	 * ### Why the scope is not the permission callback
+	 *
+	 * The first version of this passed the scope *name* as the route's
+	 * `permission_callback` — `'permission_callback' => array( $this, 'webhooks:manage' )`.
+	 * That is not a callable method, so every Phase 20 route was registered ungated. The
+	 * Phase 15 suite caught it with an assertion that walks every registered route and requires
+	 * `is_callable( $handler['permission_callback'] )`, which is the right assertion and the
+	 * reason it is worth having in a suite written a whole phase before the code.
+	 *
+	 * So the callback is `gate()` for every route, and the declared scope becomes data that
+	 * `gate()` resolves. That is also strictly better than one callback per route: the scope
+	 * and the check that enforces it cannot drift apart, because they are read from the same
+	 * table.
+	 *
+	 * @var array<string, string>
+	 */
+	private $route_scopes = array();
+
+	/**
 	 * Register every Phase 20 route.
 	 *
 	 * @return void
 	 */
 	public function register_routes() {
 		$routes = array(
-			array( '/', 'GET', 'document', 'projects:read', '__return_true' ),
-			array( '/limits', 'GET', 'get_limits', 'projects:read', '__return_true' ),
+			array( '/', 'GET', 'document', 'projects:read' ),
+			array( '/limits', 'GET', 'get_limits', 'projects:read' ),
 
-			array( '/projects', 'GET', 'list_projects', 'projects:read', '__return_true' ),
+			array( '/projects', 'GET', 'list_projects', 'projects:read' ),
 
-			array( '/events', 'GET', 'list_events', 'events:read', '__return_true' ),
-			array( '/events/catalog', 'GET', 'event_catalog', 'events:read', '__return_true' ),
+			array( '/events', 'GET', 'list_events', 'events:read' ),
+			array( '/events/catalog', 'GET', 'event_catalog', 'events:read' ),
 
-			array( '/webhooks', 'GET', 'list_webhooks', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks', 'POST', 'create_webhook', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})', 'GET', 'get_webhook', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})', 'POST', 'update_webhook', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/delete', 'POST', 'delete_webhook', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/test', 'POST', 'test_webhook', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/deliveries', 'GET', 'list_deliveries', 'webhooks:manage', '__return_true' ),
-			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/deliveries/(?P<delivery>[A-Za-z0-9]{1,26})/retry', 'POST', 'retry_delivery', 'webhooks:manage', '__return_true' ),
+			array( '/webhooks', 'GET', 'list_webhooks', 'webhooks:manage' ),
+			array( '/webhooks', 'POST', 'create_webhook', 'webhooks:manage' ),
+			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})', 'GET', 'get_webhook', 'webhooks:manage' ),
+			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})', 'POST', 'update_webhook', 'webhooks:manage' ),
+			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/delete', 'POST', 'delete_webhook', 'webhooks:manage' ),
+			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/test', 'POST', 'test_webhook', 'webhooks:manage' ),
+			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/deliveries', 'GET', 'list_deliveries', 'webhooks:manage' ),
+			array( '/webhooks/(?P<id>[A-Za-z0-9]{1,26})/deliveries/(?P<delivery>[A-Za-z0-9]{1,26})/retry', 'POST', 'retry_delivery', 'webhooks:manage' ),
 
-			array( '/automations', 'GET', 'list_automations', 'webhooks:manage', '__return_true' ),
-			array( '/automations', 'POST', 'create_automation', 'webhooks:manage', '__return_true' ),
-			array( '/automations/(?P<id>[A-Za-z0-9]{1,26})', 'POST', 'update_automation', 'webhooks:manage', '__return_true' ),
-			array( '/automations/(?P<id>[A-Za-z0-9]{1,26})/delete', 'POST', 'delete_automation', 'webhooks:manage', '__return_true' ),
-			array( '/automations/(?P<id>[A-Za-z0-9]{1,26})/run', 'POST', 'run_automation', 'webhooks:manage', '__return_true' ),
+			array( '/automations', 'GET', 'list_automations', 'webhooks:manage' ),
+			array( '/automations', 'POST', 'create_automation', 'webhooks:manage' ),
+			array( '/automations/(?P<id>[A-Za-z0-9]{1,26})', 'POST', 'update_automation', 'webhooks:manage' ),
+			array( '/automations/(?P<id>[A-Za-z0-9]{1,26})/delete', 'POST', 'delete_automation', 'webhooks:manage' ),
+			array( '/automations/(?P<id>[A-Za-z0-9]{1,26})/run', 'POST', 'run_automation', 'webhooks:manage' ),
 
-			array( '/extensions', 'GET', 'list_extensions', 'projects:read', '__return_true' ),
-			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})', 'GET', 'get_extension', 'projects:read', '__return_true' ),
-			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})/state', 'POST', 'set_extension_state', 'webhooks:manage', '__return_true' ),
-			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})/settings', 'GET', 'get_extension_settings', 'projects:read', '__return_true' ),
-			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})/settings', 'POST', 'save_extension_settings', 'webhooks:manage', '__return_true' ),
+			array( '/extensions', 'GET', 'list_extensions', 'projects:read' ),
+			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})', 'GET', 'get_extension', 'projects:read' ),
+			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})/state', 'POST', 'set_extension_state', 'webhooks:manage' ),
+			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})/settings', 'GET', 'get_extension_settings', 'projects:read' ),
+			array( '/extensions/(?P<id>[a-z0-9_-]{2,64})/settings', 'POST', 'save_extension_settings', 'webhooks:manage' ),
 		);
 
+		$this->route_scopes = array();
+
 		foreach ( $routes as $route ) {
+			$path = self::BASE . $route[0];
+
 			register_rest_route(
 				self::BASE,
 				$route[0],
 				array(
 					'methods'             => $route[1],
 					'callback'            => array( $this, $route[2] ),
-					'permission_callback' => array( $this, $route[3] ),
+					'permission_callback' => array( $this, 'gate' ),
 					'args'                => $this->args_for( $route[1] ),
 				)
 			);
+
+			$this->route_scopes[ $path ] = $route[3];
 		}
 
 		$this->logger->info(
@@ -249,37 +291,128 @@ final class Developer_Api {
 	/**
 	 * Return whether the caller may make this request.
 	 *
-	 * Every Phase 20 route is closed by the same three gates, and the route's declared scope
-	 * lives in the route table above rather than in this method — so a route cannot forget to
-	 * declare one. {@see self::gated()} also records the scope against the request so a
-	 * handler that needs to charge a plan operation can find it.
+	 * Every Phase 20 route is closed by this one method, which resolves the route's declared
+	 * scope from {@see self::$route_scopes} and then applies two gates.
+	 *
+	 * **First, a credential is refused outright.** Webhooks and automations are administrative
+	 * configuration; an API credential cannot create one. §25's agency automations are created
+	 * by people in this console, and §29's CI/CD story is about triggering reconstruction and
+	 * reading status — which the existing Phase 17 routes already allow with the right scope.
+	 * `Api_Authenticator::enforce_route_scope()` would already refuse these routes for a
+	 * credential, because their permission callback is `gate` and `gate` is not a key in
+	 * `Platform_Limits::GATE_SCOPES`; this check is the same rule stated where it is enforced.
+	 *
+	 * **Second, the declared scope's workspace capability is required.** A member with
+	 * `replicaforge_use` can therefore reach the screen and see what exists, but a route
+	 * declaring `webhooks:manage` needs `api.webhooks.manage` in the workspace. That is what
+	 * stops one member reading another workspace's webhook endpoints by guessing a path.
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return bool|\WP_Error
 	 */
 	public function gate( $request ) {
-		/*
-		 * `rest_pre_dispatch` has already checked the credential's scopes against the
-		 * `permission_callback` method name. This method's declared name *is* the gate
-		 * (`projects:read`, `webhooks:manage`, …), and those names are not in
-		 * `Platform_Limits::GATE_SCOPES`, so `enforce_route_scope()` refuses a credential
-		 * before reaching here.
-		 *
-		 * That is deliberate: a credential cannot reach these routes at all. Webhooks and
-		 * automations are administrative configuration, and the only way to automate them is
-		 * a signed-in operator in the console. §25's agency automations are created by people;
-		 * §29's CI/CD story is about triggering reconstruction and reading status, which the
-		 * existing Phase 17 routes already allow.
-		 */
 		if ( $this->auth->using_credential() ) {
-			return $this->error(
+			return new \WP_Error(
 				'api_route_session_only',
 				__( 'This endpoint is for a signed-in WordPress session, not an API credential. Use a signed-in session to configure webhooks and automations.', 'replicaforge' ),
-				403
+				array( 'status' => 403 )
 			);
 		}
 
-		return is_user_logged_in() && current_user_can( 'replicaforge_use' );
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		if ( ! current_user_can( self::SESSION_CAPABILITY ) ) {
+			return false;
+		}
+
+		$scope = $this->scope_for( $request instanceof \WP_REST_Request ? (string) $request->get_route() : '' );
+
+		if ( '' === $scope ) {
+			/*
+			 * A registered route with no scope declaration cannot happen through
+			 * `register_routes()`, but a route reaching `gate()` some other way is refused
+			 * rather than waved through — the same fail-closed rule `gate_scopes()` applies to
+			 * an unmapped permission gate.
+			 */
+			return new \WP_Error(
+				'api_route_unscoped',
+				__( 'This endpoint declares no permission, so it cannot be used.', 'replicaforge' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$definition = Platform_Limits::scope( $scope );
+
+		if ( '' === $definition['workspace'] ) {
+			return true;
+		}
+
+		$workspace_id = $request instanceof \WP_REST_Request ? (string) $request->get_param( 'workspace_id' ) : '';
+		$project_id   = $request instanceof \WP_REST_Request ? (string) $request->get_param( 'project_id' ) : '';
+
+		if ( '' === $workspace_id ) {
+			$workspace_id = $this->workspace_id();
+		}
+
+		if ( '' === $workspace_id ) {
+			return new \WP_Error(
+				'workspace_required',
+				__( 'This request needs a workspace.', 'replicaforge' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$permissions = new Permission_Manager();
+
+		$allowed = '' !== $project_id
+			? $permissions->can_in_project( get_current_user_id(), $workspace_id, $project_id, (string) $definition['workspace'] )
+			: $permissions->can( get_current_user_id(), $workspace_id, (string) $definition['workspace'] );
+
+		if ( ! $allowed ) {
+			return new \WP_Error(
+				'permission_denied',
+				sprintf(
+					/* translators: %s: the workspace capability the route requires. */
+					__( 'This endpoint needs the "%s" permission in this workspace.', 'replicaforge' ),
+					(string) $definition['workspace']
+				),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Resolve the declared scope for a route path.
+	 *
+	 * @param string $route Route path.
+	 * @return string
+	 */
+	private function scope_for( $route ) {
+		$route = (string) $route;
+
+		if ( isset( $this->route_scopes[ $route ] ) ) {
+			return (string) $this->route_scopes[ $route ];
+		}
+
+		// WordPress hands the *pattern*, but a caller may hand the resolved path. For a request
+		// that matched a parameterised route those differ, so the patterns are matched too.
+		// First match wins, which is correct because `/webhooks/{id}` and `/webhooks/{id}/test`
+		// are distinguished by their suffix rather than by anything in the parameter.
+		foreach ( $this->route_scopes as $pattern => $scope ) {
+			if ( preg_match( '#^' . $pattern . '$#', $route ) ) {
+				return (string) $scope;
+			}
+		}
+
+		return '';
 	}
 
 	/**
@@ -343,12 +476,30 @@ final class Developer_Api {
 	 * @return \WP_REST_Response
 	 */
 	public function get_limits( $request ) {
-		$usage = ( new Usage_Manager() )->summary( get_current_user_id() );
+		$usage   = new Usage_Manager();
+		$user_id = get_current_user_id();
+		$plan    = ( new Plan_Manager() )->current_plan( $user_id );
 
+		/*
+		 * `Usage_Manager::meter( $user_id, $plan )`, not a `summary()`.
+		 *
+		 * The meter is the method that exists and the one Phase 10's own screens use, and it
+		 * returns exactly what a caller needs: per-operation used/held/limit/remaining plus
+		 * the period and reset time. Inventing a `summary()` name here would have produced an
+		 * undefined-method fatal on the first request to this route — which is what happened,
+		 * and is why the security suite now fails on it.
+		 */
 		return $this->ok(
 			array(
-				'rate_limit' => $this->limiter->peek( 'user:' . get_current_user_id(), Platform_Limits::RATE_LIMIT_PER_MINUTE ),
-				'plan'       => $usage,
+				/* Keyed by credential where a credential made the request, so an integration
+				 * reading its own headroom is told its own limit rather than the workspace's. */
+				'rate_limit' => $this->limiter->peek(
+					$this->auth->using_credential()
+						? 'cred:' . (string) ( $this->auth->credential()['credential_id'] ?? '' )
+						: 'user:' . $user_id,
+					Platform_Limits::RATE_LIMIT_PER_MINUTE
+				),
+				'plan'       => $usage->meter( $user_id, $plan ),
 				'buckets'    => $this->limiter->report(),
 			)
 		);
@@ -1024,7 +1175,7 @@ final class Developer_Api {
 			'workspace_id' => (string) ( $record['workspace_id'] ?? '' ),
 			'project_id'   => (string) ( $record['project_id'] ?? '' ),
 			'name'         => (string) ( $record['name'] ?? '' ),
-			'trigger'      => (string) ( $record['trigger'] ?? '' ),
+			'trigger'      => (string) ( $record['trigger_event'] ?? '' ),
 			'action'       => (string) ( $record['action'] ?? '' ),
 			'options'      => (array) ( $record['options'] ?? array() ),
 			'status'       => (string) ( $record['status'] ?? '' ),
@@ -1251,14 +1402,17 @@ final class Developer_Api {
 	/**
 	 * Resolve the workspace a request is about.
 	 *
-	 * @param \WP_REST_Request $request Request.
+	 * @param \WP_REST_Request|null $request Request, or null to resolve the caller's first
+	 *                                        workspace without one.
 	 * @return string
 	 */
-	private function workspace_id( $request ) {
-		$workspace_id = (string) $request->get_param( 'workspace_id' );
+	private function workspace_id( $request = null ) {
+		if ( $request instanceof \WP_REST_Request ) {
+			$workspace_id = (string) $request->get_param( 'workspace_id' );
 
-		if ( '' !== $workspace_id ) {
-			return $workspace_id;
+			if ( '' !== $workspace_id ) {
+				return $workspace_id;
+			}
 		}
 
 		foreach ( ( new Workspace_Store() )->for_user( get_current_user_id() ) as $workspace ) {
@@ -1300,7 +1454,7 @@ final class Developer_Api {
 			return true;
 		}
 
-		$workspace_id = $this->workspace_id( null );
+		$workspace_id = $this->workspace_id();
 
 		return '' !== $workspace_id
 			&& ( new Permission_Manager() )->can( get_current_user_id(), $workspace_id, 'api.extensions.manage' );
@@ -1425,10 +1579,9 @@ final class Developer_Api {
 				$common,
 				$page,
 				array(
-					'status'    => array( 'type' => 'string', 'maxLength' => 32 ),
-					'type'      => array( 'type' => 'string', 'maxLength' => 60 ),
-					'trigger'   => array( 'type' => 'string', 'maxLength' => 60 ),
-					'per_page2' => array( 'type' => 'integer' ),
+					'status'  => array( 'type' => 'string', 'maxLength' => 32 ),
+					'type'    => array( 'type' => 'string', 'maxLength' => 60 ),
+					'trigger' => array( 'type' => 'string', 'maxLength' => 60 ),
 				)
 			);
 		}

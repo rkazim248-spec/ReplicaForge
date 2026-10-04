@@ -100,29 +100,69 @@ class Extension_Store extends Collaboration_Store {
 	/**
 	 * Return every extension record.
 	 *
+	 * ### Why this is a direct read rather than `query( '*', … )`
+	 *
+	 * Two reasons, one practical and one about what this table is.
+	 *
+	 * Practically: this store has no `browse()` of its own, and `Collaboration_Store::query()`
+	 * takes a workspace id — which extensions do not have, because an installed extension is a
+	 * property of the site rather than of one agency's workspace. `find()` accepts `'*'` for
+	 * exactly this case but returns one row.
+	 *
+	 * Structurally: the set is bounded by {@see Platform_Limits::MAX_EXTENSIONS} = 100 and every
+	 * row is metadata. Pagination would be machinery for a table that cannot exceed a hundred
+	 * rows, and `Extension_Store::save()` already refuses the 101st. A direct read with the same
+	 * bound applied is both simpler and harder to get wrong than a paginated path nobody needs.
+	 *
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function all() {
+		global $wpdb;
+
 		if ( ! $this->ready() ) {
 			return array();
 		}
 
-		$rows = array();
+		$table = $this->table();
 
-		foreach ( $this->browse( '*', array( 'per_page' => 200 ) )['items'] as $row ) {
-			$rows[] = $row;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table is internal.
+				"SELECT * FROM {$table} ORDER BY extension_id ASC LIMIT %d",
+				Platform_Limits::MAX_EXTENSIONS
+			),
+			ARRAY_A
+		);
+
+		$out = array();
+
+		foreach ( (array) $rows as $row ) {
+			if ( is_array( $row ) ) {
+				$out[] = $this->cast( $row );
+			}
 		}
 
-		return $rows;
+		return $out;
 	}
 
 	/**
 	 * Return one extension by its own id.
 	 *
+	 * Named `find_by_extension_id()` rather than `find()` for the reason
+	 * `Collaboration_Store` documents on `delete_rows()`: the parent declares a **protected**
+	 * `find( $workspace_id, $public_id )`, and a child cannot widen visibility *and* change
+	 * the signature. Doing so is a fatal error at class-composition time rather than a
+	 * warning — and `php -l` does not catch it, because the file is perfectly valid on its
+	 * own. It only surfaces when the class is actually loaded, which is why the full suite
+	 * found it and a lint pass could not.
+	 *
+	 * Extensions carry no `workspace_id`: an installed extension is a property of the *site*,
+	 * not of one agency's workspace, which is why the lookup is explicitly cross-workspace.
+	 *
 	 * @param string $extension_id Extension id.
 	 * @return array<string, mixed>|null
 	 */
-	public function find( $extension_id ) {
+	public function find_by_extension_id( $extension_id ) {
 		$extension_id = $this->clean_key( $extension_id );
 
 		if ( '' === $extension_id || ! $this->ready() ) {
@@ -158,7 +198,7 @@ class Extension_Store extends Collaboration_Store {
 			return new \WP_Error( 'extension_id_required', __( 'An extension id is required.', 'replicaforge' ), array( 'status' => 400 ) );
 		}
 
-		$existing = $this->find( $extension_id );
+		$existing = $this->find_by_extension_id( $extension_id );
 
 		if ( null === $existing ) {
 			if ( count( $this->all() ) >= Platform_Limits::MAX_EXTENSIONS ) {
@@ -169,14 +209,32 @@ class Extension_Store extends Collaboration_Store {
 				);
 			}
 
+			/*
+			 * `array_merge()` with the defaults *first*, so `$record` wins — except for
+			 * `public_id`, which must not.
+			 *
+			 * `Extension_Registry::register()` builds its record with
+			 * `'public_id' => ''` when it has no prior row (it uses the existing row's id when
+			 * there is one), and `array_merge( $defaults, $record )` would let that empty string
+			 * overwrite the freshly generated id. Every extension row then had
+			 * `public_id = ''`, which collides on the UNIQUE index the moment a second one is
+			 * registered — so the third extension to register failed to insert.
+			 *
+			 * The id is therefore re-asserted *after* the merge, and only when the incoming
+			 * value is genuinely absent.
+			 */
 			$row = array_merge(
 				array(
-					'public_id' => $this->new_public_id(),
+					'public_id'  => $this->new_public_id(),
 					'created_at' => gmdate( 'Y-m-d H:i:s' ),
 				),
 				$record,
 				array( 'extension_id' => $extension_id )
 			);
+
+			if ( '' === (string) $row['public_id'] ) {
+				$row['public_id'] = $this->new_public_id();
+			}
 
 			$stored = $this->insert( $row );
 
@@ -194,7 +252,7 @@ class Extension_Store extends Collaboration_Store {
 
 		$this->update_row( (string) $existing['public_id'], $changes );
 
-		$fresh = $this->find( $extension_id );
+		$fresh = $this->find_by_extension_id( $extension_id );
 
 		return null === $fresh ? $existing : $fresh;
 	}

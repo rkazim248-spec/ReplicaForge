@@ -656,6 +656,17 @@ final class Platform_Limits {
 	const MAX_CREDENTIALS = 25;
 
 	/**
+	 * Extensions registered on a site.
+	 *
+	 * Site-wide rather than per workspace, because an installed extension is a property of the
+	 * *site* — it is registered by already-trusted PHP running in the process, not by a user
+	 * in a workspace. `Extension_Store` has no `workspace_id` column for that reason.
+	 *
+	 * @var int
+	 */
+	const MAX_EXTENSIONS = 100;
+
+	/**
 	 * Webhook subscriptions per workspace.
 	 *
 	 * @var int

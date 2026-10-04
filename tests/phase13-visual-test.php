@@ -1399,7 +1399,7 @@ foreach ( $migrations as $entry ) {
 check( is_array( $phase13_entry ), 'The Phase 13 migration is still declared, by its own target version rather than by its position.' );
 check( '' !== (string) ( $phase13_entry['summary'] ?? '' ), 'And has a summary.' );
 check( (float) $phase13_entry['from'] < 13.0, 'And follows a version that precedes it.' );
-check( ! in_array( $chain, $phase13_entry, true ) || true, 'And the declared chain is ordered, so the migration runs in sequence.' );
+check( ! in_array( $chain, $phase13_entry, true ), 'And the declared chain is ordered, so the migration runs in sequence.' );
 $gapless = true;
 $targets = array_map( 'strval', $chain );
 $previous = null;

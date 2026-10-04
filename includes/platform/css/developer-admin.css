@@ -1,0 +1,149 @@
+/**
+ * Phase 20: developer console styles.
+ *
+ * Deliberately a thin layer on top of the stylesheet Phase 17 and Phase 19 already ship,
+ * rather than a new visual language. The class names here (`rf-panel`, `rf-table`, `rf-pill`,
+ * `rf-form`, `rf-check`) are the ones used in `orchestrator-admin.css` and
+ * `templates-admin.css`; only the genuinely new pieces — the status pills and the nested
+ * delivery table — get rules of their own, and those are written in the same visual language
+ * so the three screens read as one product.
+ */
+
+.rf-wrap .rf-panel {
+	margin: 20px 0;
+	padding: 16px 20px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.rf-wrap .rf-panel h2 {
+	margin: 0 0 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.rf-wrap .rf-panel-body > form.rf-form {
+	margin: 0 0 18px;
+	padding: 14px 16px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+}
+
+.rf-wrap .rf-form fieldset {
+	margin: 10px 0;
+	padding: 10px 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	background: #fff;
+}
+
+.rf-wrap .rf-form legend {
+	padding: 0 6px;
+	font-weight: 600;
+	color: #50575e;
+}
+
+/* Scope checkboxes into a wrapping grid. A wall of 16 unscoped checkboxes is unreadable,
+   and a grid is what makes it scannable without hiding anything. */
+.rf-wrap .rf-check {
+	display: inline-block;
+	min-width: 190px;
+	margin: 0 14px 4px 0;
+	vertical-align: top;
+}
+
+.rf-wrap .rf-check code {
+	font-size: 12px;
+}
+
+.rf-wrap .rf-table {
+	margin-top: 10px;
+}
+
+.rf-wrap .rf-table th {
+	font-weight: 600;
+}
+
+.rf-wrap .rf-table code {
+	font-size: 12px;
+	word-break: break-all;
+}
+
+/* The delivery history sits inside a subscription row. */
+.rf-wrap .rf-nested {
+	padding: 0;
+	border: 0;
+	background: #f6f7f7;
+}
+
+.rf-wrap .rf-table-nested th,
+.rf-wrap .rf-table-nested td {
+	padding: 6px 10px;
+	font-size: 12px;
+}
+
+.rf-wrap .rf-table-nested form {
+	display: inline;
+}
+
+/* Status pills. Four tones, and the names say what they mean rather than what colour they
+   are — `ok`/`warn`/`bad`/`neutral` — so a theme change cannot invert the meaning. */
+.rf-wrap .rf-pill {
+	display: inline-block;
+	padding: 2px 9px;
+	border-radius: 10px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.7;
+	letter-spacing: 0.02em;
+	text-transform: lowercase;
+	white-space: nowrap;
+}
+
+.rf-wrap .rf-pill-ok {
+	color: #0a5c2e;
+	background: #d5f0dd;
+}
+
+.rf-wrap .rf-pill-warn {
+	color: #7a4b00;
+	background: #fcf0d3;
+}
+
+.rf-wrap .rf-pill-bad {
+	color: #8a1f11;
+	background: #fbd9d5;
+}
+
+.rf-wrap .rf-pill-neutral {
+	color: #3c434a;
+	background: #e8e9ea;
+}
+
+.rf-wrap .rf-error {
+	margin: 10px 0 0;
+	color: #8a1f11;
+}
+
+/* One-time secrets. The notice is a warning rather than a success because the reader has to
+   act on it immediately, and it is `<code>`-wrapped so a token is visually distinct from
+   prose that someone might skim past. */
+.rf-wrap .notice-warning p code {
+	padding: 2px 6px;
+	background: #fcf0d3;
+	border-radius: 3px;
+	font-size: 12px;
+	word-break: break-all;
+	user-select: all;
+}
+
+@media screen and (max-width: 782px) {
+	.rf-wrap .rf-check {
+		display: block;
+		min-width: 0;
+	}
+}

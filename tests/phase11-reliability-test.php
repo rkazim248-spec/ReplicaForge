@@ -401,7 +401,30 @@ check( (int) $recovery->report()['stuck_total'] > 0, 'The recovery report counts
 $swept = $recovery->sweep();
 same( (string) $repository->find( $stuck_id )['status'], Job_States::EXPIRED, 'A stuck job that had begun writing is expired rather than retried.' );
 check( (int) $swept['expired'] >= 1, 'The sweep reports what it expired.' );
-check( ! in_array( $stuck_id, ( new Job_Repository() )->claimable() && array_map( 'strval', wp_list_pluck( ( new Job_Repository() )->claimable(), 'job_id' ) ) ?: array(), true ) || true, 'An expired job is not silently re-queued.' );
+/*
+ * This assertion used to read:
+ *
+ *     check( ! in_array( $stuck_id, claimable() && array_map( … ) ?: array(), true ) || true, … );
+ *
+ * Two defects in one line.
+ *
+ * `claimable() && array_map( … )` is a *boolean* AND, not a concatenation, so the second
+ * argument to `in_array()` was a bool. It happened not to fatal only because `claimable()`
+ * was returning an empty array — `[] && X` is `false`, and `false ?: array()` is an array.
+ * The moment a claimable job existed, `in_array( $id, true )` raised a TypeError. That is
+ * what happened the first time this suite ran after a prior run left jobs in the queue.
+ *
+ * And the trailing `|| true` made the whole expression unconditionally true, so even when it
+ * did evaluate, the assertion could never fail. It was decoration.
+ *
+ * The claimable set is now built properly and the assertion can fail.
+ */
+$rf11_claimable = array_map( 'strval', wp_list_pluck( ( new Job_Repository() )->claimable(), 'job_id' ) );
+
+check(
+	! in_array( $stuck_id, $rf11_claimable, true ),
+	'An expired job is not silently re-queued.'
+);
 same( Job_Limits::is_terminal( Job_States::EXPIRED ), true, 'An expired job cannot be claimed again, because it is terminal.' );
 
 // A job whose worker died before writing.

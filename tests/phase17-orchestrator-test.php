@@ -1617,7 +1617,7 @@ final class ReplicaForge_Phase17_Orchestrator_Test {
 			}
 		}
 
-		$this->ok( 'and the report never tells anyone it published anything', $has_publish_advice || true );
+		$this->ok( 'and the report never tells anyone it published anything', ! $has_publish_advice );
 
 		$artifacts->purge();
 	}

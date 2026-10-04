@@ -316,6 +316,78 @@ final class Plugin {
 	private $template_api;
 
 	/**
+	 * Phase 20: the developer platform.
+	 *
+	 * Declared as a group rather than one-by-one because they form a single connected graph:
+	 * the dispatcher and the automation runner reference each other, and both the API and the
+	 * console need the same four stores. Splitting them across the file would suggest they are
+	 * independent, which is the opposite of the reason the order in `boot()` matters.
+	 *
+	 * @var Rate_Limiter
+	 */
+	private $rate_limiter;
+
+	/**
+	 * @var Extension_Registry
+	 */
+	private $extension_registry;
+
+	/**
+	 * @var Event_Store
+	 */
+	private $event_store;
+
+	/**
+	 * @var Webhook_Store
+	 */
+	private $webhook_store;
+
+	/**
+	 * @var Webhook_Delivery_Store
+	 */
+	private $webhook_deliveries;
+
+	/**
+	 * @var Webhook_Delivery
+	 */
+	private $webhook_delivery;
+
+	/**
+	 * @var Event_Dispatcher
+	 */
+	private $event_dispatcher;
+
+	/**
+	 * @var Automation_Store
+	 */
+	private $automation_store;
+
+	/**
+	 * @var Automation_Runner
+	 */
+	private $automation_runner;
+
+	/**
+	 * @var Api_Credential_Store
+	 */
+	private $api_credentials;
+
+	/**
+	 * @var Api_Authenticator
+	 */
+	private $api_authenticator;
+
+	/**
+	 * @var Developer_Api
+	 */
+	private $developer_api;
+
+	/**
+	 * @var Developer_Admin
+	 */
+	private $developer_admin;
+
+	/**
 	 * Phase 19. The template library admin screen.
 	 *
 	 * @var Template_Admin|null
@@ -787,11 +859,297 @@ $this->workspace_admin->register();
 
 		$this->template_admin = new Template_Admin( $this->logger );
 
+		/*
+		 * Phase 20: the developer platform.
+		 *
+		 * Built here rather than lazily, and registered unconditionally for the same reason
+		 * every other REST surface above is: the routes are the permission boundary, so they
+		 * must exist for any caller, not only for `wp-admin`.
+		 *
+		 * The dependency order is not arbitrary and is the reason this block sits after
+		 * Phase 17 and Phase 19:
+		 *
+		 * - `Extension_Registry` first, because the developer API reports extensions and an
+		 *   extension may contribute automations.
+		 * - `Event_Dispatcher` before `Automation_Runner`, because the runner emits failure
+		 *   events and the dispatcher needs a runner to fire automations. One of the two has
+		 *   to be built first and injected afterwards; `set_automation_runner()` exists for
+		 *   exactly that cycle.
+		 * - `Api_Authenticator` before `Developer_Api`, because the API is handed the
+		 *   authenticator and never builds its own.
+		 *
+		 * The authenticator's `register()` also installs the `rest_pre_dispatch` scope gate,
+		 * which is what stops a read-only credential reaching a write route among the ~130
+		 * that Phases 1-19 already registered. That gate is not optional and not conditional
+		 * on any Phase 20 route being called.
+		 */
+		$this->rate_limiter = new Rate_Limiter( $this->logger );
+
+		$this->extension_registry = new Extension_Registry( null, $this->logger );
+
+		$this->event_store        = new Event_Store( null, $this->logger );
+		$this->webhook_store      = new Webhook_Store( null, $this->logger );
+		$this->webhook_deliveries = new Webhook_Delivery_Store( null, $this->logger );
+		$this->webhook_delivery   = new Webhook_Delivery( $this->logger, $this->webhook_store, $this->webhook_deliveries );
+
+		$this->event_dispatcher = new Event_Dispatcher( $this->logger, $this->event_store, $this->webhook_store, $this->webhook_deliveries );
+
+		$this->automation_store  = new Automation_Store( null, $this->logger );
+		$this->automation_runner = new Automation_Runner( $this->logger, $this->automation_store, $this->event_dispatcher );
+
+		/*
+		 * Closes the dispatcher/runner cycle. Without this, events would be recorded and
+		 * delivered to webhooks but would never fire an automation.
+		 */
+		$this->event_dispatcher->set_automation_runner( $this->automation_runner );
+
+		$this->api_credentials = new Api_Credential_Store( null, $this->logger );
+
+		$this->api_authenticator = new Api_Authenticator(
+			$this->api_credentials,
+			$this->rate_limiter,
+			$this->logger,
+			/*
+			 * `new Entitlement_Manager()` and `new Permission_Manager()` inline, matching how
+			 * every other consumer in this file gets them. Both hold their own state but
+			 * share static caches (`Permission_Manager::flush()` is static), so a second
+			 * instance is cheap and there is no reason for this block to be the one place
+			 * that holds a reference.
+			 */
+			new Entitlement_Manager(),
+			new Permission_Manager()
+		);
+
+		/*
+		 * Authentication and the scope gate, registered here so the `determine_current_user`
+		 * filter is in place for every request — REST or admin, credential or session.
+		 */
+		$this->api_authenticator->register();
+
+		$this->developer_api = new Developer_Api(
+			$this->api_authenticator,
+			$this->logger,
+			$this->extension_registry,
+			$this->event_dispatcher,
+			$this->automation_runner,
+			$this->api_credentials,
+			$this->webhook_store,
+			$this->event_store,
+			$this->automation_store,
+			$this->webhook_deliveries,
+			$this->webhook_delivery,
+			$this->rate_limiter
+		);
+
+		add_action( 'rest_api_init', array( $this->developer_api, 'register_routes' ) );
+
+		$this->developer_admin = new Developer_Admin(
+			$this->logger,
+			$this->api_credentials,
+			$this->webhook_store,
+			$this->webhook_delivery,
+			$this->webhook_deliveries,
+			$this->automation_store,
+			$this->automation_runner,
+			$this->extension_registry,
+			$this->event_store,
+			$this->event_dispatcher,
+			new Permission_Manager()
+		);
+
+		/*
+		 * The webhook delivery tick, on the plugin's existing job cron.
+		 *
+		 * Deliberately *not* a new schedule. A webhook is background work by definition, and
+		 * a second cron is a second thing to schedule, a second thing to miss, and a second
+		 * thing to reason about when it stops firing. `Webhook_Delivery::tick()` takes
+		 * `Job_Lock` for mutual exclusion, so two ticks cannot deliver the same payload.
+		 *
+		 * It is also deliberately *not* a job in the job queue. `Job_Runner::dispatch()`
+		 * switches on `Job_Limits::STAGES` and force-advances anything unrecognised into the
+		 * `analyze` stage, so a webhook delivery placed there would be driven into the
+		 * reconstruction pipeline. The delivery store is an audit log drained by this hook —
+		 * see `Webhook_Delivery_Store`'s docblock for why that is not a second queue.
+		 */
+		add_action( Maintenance::JOB_HOOK, array( $this, 'process_webhook_deliveries' ) );
+
+		$this->register_event_sources();
+
 		if ( is_admin() ) {
 			$this->admin->register();
 			$this->orchestrator_admin->register();
 			$this->template_admin->register();
+			$this->developer_admin->register();
 		}
+	}
+
+	/**
+	 * Subscribe the platform to what the earlier phases already emit.
+	 *
+	 * ### Why listeners rather than edits to the emitting classes
+	 *
+	 * Phase 17's executor and Phase 19's installer were written without knowledge of events,
+	 * and adding an emit call into each would mean every future change to those classes has to
+	 * remember the platform exists. Listening to what they already fire is also what keeps
+	 * the event vocabulary honest: the events derive from behaviour that is already tested,
+	 * rather than from a declaration that could drift away from it.
+	 *
+	 * @return void
+	 */
+	private function register_event_sources() {
+		/*
+		 * The credential lifecycle. `Api_Credential_Store` fires
+		 * `replicaforge_credential_revoked` with the *public id* and never the token, so this
+		 * listener can emit the public event without any risk of forwarding a secret.
+		 */
+		add_action(
+			'replicaforge_credential_revoked',
+			function ( $credential_id, $record ) {
+				$this->event_dispatcher->emit(
+					'credential.revoked',
+					array(
+						'workspace_id' => (string) ( $record['workspace_id'] ?? '' ),
+						'resource_id'  => (string) $credential_id,
+						'actor_id'     => (int) ( $record['user_id'] ?? 0 ),
+						'data'         => array( 'name' => (string) ( $record['name'] ?? '' ) ),
+					)
+				);
+			},
+			10,
+			2
+		);
+
+		/*
+		 * Phase 19 template lifecycle. The mapping from action to event type lives here so
+		 * that adding a template event does not require touching the template layer.
+		 *
+		 * `data` is limited to identifiers and a summary. A template's document is never put
+		 * in an event payload: an event is delivered to a third-party webhook, and a full
+		 * document is exactly the kind of payload §15 says to keep out.
+		 */
+		$template_events = array(
+			'replicaforge_template_created'  => 'template.created',
+			'replicaforge_template_imported' => 'template.imported',
+			'replicaforge_template_updated'  => 'template.updated',
+		);
+
+		foreach ( $template_events as $action => $event_type ) {
+			add_action(
+				$action,
+				function ( $record ) use ( $event_type ) {
+					if ( ! is_array( $record ) ) {
+						return;
+					}
+
+					$workspace_id = (string) ( $record['workspace_id'] ?? '' );
+
+					if ( '' === $workspace_id ) {
+						return;
+					}
+
+					$this->event_dispatcher->emit(
+						$event_type,
+						array(
+							'workspace_id' => $workspace_id,
+							'project_id'   => (string) ( $record['project_id'] ?? '' ),
+							'resource_id'  => (string) ( $record['public_id'] ?? $record['template_id'] ?? '' ),
+							'actor_id'     => (int) ( $record['user_id'] ?? 0 ),
+							'data'         => array(
+								'name'    => (string) ( $record['name'] ?? '' ),
+								'type'    => (string) ( $record['type'] ?? $record['template_type'] ?? '' ),
+								'status'  => (string) ( $record['status'] ?? '' ),
+								/* A version number is metadata about a change, not the change
+								 * itself, so it is safe to expose where a document is not. */
+								'version' => (string) ( $record['version'] ?? $record['current_version'] ?? '' ),
+							),
+						)
+					);
+				},
+				10,
+				1
+			);
+		}
+
+		/*
+		 * Phase 17 workflow lifecycle. `Workflow_Executor::run()` is the only public entry
+		 * point and it is synchronous, so listening for the actions it already fires is
+		 * enough to learn when a workflow reached a terminal state.
+		 */
+		add_action(
+			'replicaforge_workflow_completed',
+			function ( $workflow ) {
+				$this->emit_workflow( 'workflow.completed', $workflow );
+			},
+			10,
+			1
+		);
+
+		add_action(
+			'replicaforge_workflow_failed',
+			function ( $workflow ) {
+				$this->emit_workflow( 'workflow.failed', $workflow );
+			},
+			10,
+			1
+		);
+	}
+
+	/**
+	 * Emit a workflow event from a Phase 17 workflow record.
+	 *
+	 * The correlation id is derived from the workflow id rather than the current request, so
+	 * every event belonging to one workflow shares a thread even when its stages run in
+	 * different PHP processes — which they do, because the executor is synchronous but the
+	 * queue that invokes it is not.
+	 *
+	 * @param string               $event_type Event type.
+	 * @param array<string, mixed> $workflow   Workflow record.
+	 * @return void
+	 */
+	private function emit_workflow( $event_type, $workflow ) {
+		if ( ! is_array( $workflow ) ) {
+			return;
+		}
+
+		$workspace_id = (string) ( $workflow['workspace_id'] ?? '' );
+
+		/*
+		 * A workflow with no workspace is refused rather than recorded. An event without a
+		 * workspace has no permission boundary: nothing downstream could decide whether the
+		 * actor may see the resource it names, and that is the property that keeps events out
+		 * of a cross-workspace leak.
+		 */
+		if ( '' === $workspace_id ) {
+			return;
+		}
+
+		$workflow_id = (string) ( $workflow['workflow_id'] ?? $workflow['public_id'] ?? '' );
+
+		$this->event_dispatcher->emit(
+			$event_type,
+			array(
+				'workspace_id'   => $workspace_id,
+				'project_id'     => (string) ( $workflow['project_id'] ?? '' ),
+				'resource_id'    => $workflow_id,
+				'actor_id'       => (int) ( $workflow['created_by'] ?? $workflow['owner_id'] ?? 0 ),
+				'correlation_id' => '' !== $workflow_id ? substr( hash( 'sha256', 'workflow|' . $workflow_id ), 0, 32 ) : '',
+				'data'           => array(
+					'state' => (string) ( $workflow['state'] ?? '' ),
+					'stage' => (string) ( $workflow['stage'] ?? '' ),
+					'type'  => (string) ( $workflow['type'] ?? '' ),
+					'mode'  => (string) ( $workflow['mode'] ?? '' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Attempt the webhook deliveries that are due.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function process_webhook_deliveries() {
+		return $this->webhook_delivery->tick();
 	}
 
 	/**
